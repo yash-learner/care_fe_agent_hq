@@ -22,6 +22,7 @@ import ValueSetSelect from "@/components/Questionnaire/ValueSetSelect";
 import useBreakpoints from "@/hooks/useBreakpoints";
 
 import { Code } from "@/types/base/code/code";
+import { isIOSDevice } from "@/Utils/utils";
 
 interface InstructionsPopoverProps {
   currentInstructions: Code[];
@@ -151,7 +152,7 @@ export default function InstructionsPopover({
 
   if (isMobile) {
     return (
-      <Drawer repositionInputs>
+      <Drawer repositionInputs={!isIOSDevice}>
         <DrawerTrigger asChild>
           {TriggerButton(currentInstructions, disabledButton)}
         </DrawerTrigger>
