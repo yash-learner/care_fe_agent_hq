@@ -97,10 +97,6 @@ export const dateTimeQueryString = (date: DateLike, isEndDate = false) => {
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-export const isMacDevice = /Mac/i.test(navigator.userAgent);
-export const isAppleDevice = isIOSDevice || isMacDevice;
-
 function hasTouch() {
   try {
     document.createEvent("TouchEvent");
@@ -111,6 +107,13 @@ function hasTouch() {
 }
 
 export const isTouchDevice = hasTouch();
+
+// Detect iOS devices including iPadOS in desktop mode (reports as Mac with touch)
+export const isIOSDevice =
+  /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (/Mac/i.test(navigator.userAgent) && isTouchDevice);
+export const isMacDevice = /Mac/i.test(navigator.userAgent) && !isIOSDevice;
+export const isAppleDevice = isIOSDevice || isMacDevice;
 
 export const isUserOnline = (user: { last_login: DateLike }) => {
   return user.last_login
