@@ -93,12 +93,10 @@ const accountId = getAccountId();
 `/facility/${facilityId}/settings/devices`
 `/facility/${facilityId}/settings/services`
 `/facility/${facilityId}/users`
-
 // Patient pages
 `/facility/${facilityId}/patient/${patientId}/encounter/${encounterId}`
 `/facility/${facilityId}/patient/${patientId}/profile`
 `/facility/${facilityId}/encounters`
-
 // Admin pages
 `/admin/questionnaire`
 `/admin/valueset`
