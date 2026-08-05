@@ -7,11 +7,19 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import useBreakpoints from "@/hooks/useBreakpoints";
 
 import FilterRenderer from "./filterRenderer";
 import { SelectedFilterBar } from "./selectedFilterBar";
@@ -53,6 +61,7 @@ export default function MultiFilter({
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [openStates, setOpenStates] = useState<Record<string, boolean>>({});
   const { t } = useTranslation();
+  const isMobile = useBreakpoints({ default: true, sm: false });
 
   const activeFiltersCount = Object.values(selectedFilters).reduce(
     (sum, filterState) => {
@@ -120,44 +129,63 @@ export default function MultiFilter({
     },
   );
 
+  const triggerButton = (
+    <Button
+      variant="outline"
+      className={cn(
+        "justify-between font-semibold",
+        hasAnyFilters && "border-blue-300 bg-blue-50",
+        triggerButtonClassName,
+      )}
+      disabled={disabled}
+    >
+      <ListFilter className="h-3 w-3" />
+      <span className="truncate">{placeholder}</span>
+    </Button>
+  );
+
+  const filterContent = activeFilter ? (
+    <FilterRenderer
+      activeFilter={activeFilter}
+      selectedFilters={selectedFilters}
+      handleBack={handleBack}
+      onFilterChange={onFilterChange}
+      facilityId={facilityId}
+    />
+  ) : (
+    <FilterList
+      handleFilterSelect={handleFilterSelect}
+      selectedFilters={selectedFilters}
+      setActiveFilter={setActiveFilter}
+    />
+  );
+
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "justify-between font-semibold",
-              hasAnyFilters && "border-blue-300 bg-blue-50",
-              triggerButtonClassName,
-            )}
-            disabled={disabled}
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+          <DrawerContent
+            aria-describedby={undefined}
+            className="min-h-[50vh] max-h-[85vh] px-0 pt-2 pb-0 rounded-t-lg"
           >
-            <ListFilter className="h-3 w-3" />
-            <span className="truncate">{placeholder}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-[calc(100vw)] max-w-[calc(100vw-3rem)] sm:max-w-xs p-0"
-          align={align}
-        >
-          {activeFilter ? (
-            <FilterRenderer
-              activeFilter={activeFilter}
-              selectedFilters={selectedFilters}
-              handleBack={handleBack}
-              onFilterChange={onFilterChange}
-              facilityId={facilityId}
-            />
-          ) : (
-            <FilterList
-              handleFilterSelect={handleFilterSelect}
-              selectedFilters={selectedFilters}
-              setActiveFilter={setActiveFilter}
-            />
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DrawerTitle className="sr-only">{t("filter_options")}</DrawerTitle>
+            <div className="mt-6 pb-[env(safe-area-inset-bottom)] flex-1 overflow-y-auto">
+              {filterContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[calc(100vw)] max-w-[calc(100vw-3rem)] sm:max-w-xs p-0"
+            align={align}
+          >
+            {filterContent}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {Object.entries(selectedFilters).map(([key, _]) => {
         const filterState = selectedFilters[key];
         if (
