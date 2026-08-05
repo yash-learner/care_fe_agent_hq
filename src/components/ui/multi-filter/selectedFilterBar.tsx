@@ -151,10 +151,7 @@ export function SelectedFilterBar({
               </Button>
             )}
           </div>
-          <DrawerContent
-            aria-describedby={undefined}
-            className="min-h-[50vh] max-h-[85vh] px-0 pt-2 pb-0 rounded-t-lg"
-          >
+          <DrawerContent className="min-h-[50vh] max-h-[85vh] px-0 pt-2 pb-0 rounded-t-lg">
             <DrawerTitle className="sr-only">{t("filter_options")}</DrawerTitle>
             <div className="mt-6 pb-[env(safe-area-inset-bottom)] flex-1 overflow-y-auto">
               {filterEditor}
