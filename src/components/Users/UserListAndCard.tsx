@@ -19,6 +19,32 @@ import { formatName, isUserOnline } from "@/Utils/utils";
 import { UserReadMinimal } from "@/types/user/user";
 import { Bot } from "lucide-react";
 
+/**
+ * Formats role_orgs into a human-readable string.
+ * Primary: organization.name (e.g. "Doctor")
+ * Secondary (when not "Member"): role.name (e.g. "Manager")
+ * Multiple orgs: comma-joined (e.g. "Doctor, Nurse")
+ * With designation: "Doctor · Manager"
+ */
+function formatRoleOrgLabels(
+  role_orgs?: UserReadMinimal["role_orgs"],
+): string {
+  if (!role_orgs || role_orgs.length === 0) {
+    return "—";
+  }
+
+  return role_orgs
+    .map((membership) => {
+      const orgName = membership.organization.name;
+      const roleName = membership.role.name;
+      // Append designation when not default "Member"
+      return roleName && roleName !== "Member"
+        ? `${orgName} · ${roleName}`
+        : orgName;
+    })
+    .join(", ");
+}
+
 interface UserCardProps {
   user: UserReadMinimal;
   roleName: string;
@@ -159,7 +185,7 @@ export const UserGrid = ({ users }: { users?: UserReadMinimal[] }) => {
           facility={facilityId}
           key={user.id}
           user={user}
-          roleName={user.user_type}
+          roleName={formatRoleOrgLabels(user.role_orgs)}
         />
       ))}
     </div>
@@ -217,7 +243,7 @@ const UserListRow = ({ user }: { user: UserReadMinimal }) => {
         <UserStatusIndicator user={user} addPadding />
       </td>
       <td id="role" className="px-10 py-4 text-sm">
-        {user.user_type}
+        {formatRoleOrgLabels(user.role_orgs)}
       </td>
       <td id="contact" className="px-4 py-4 text-sm whitespace-nowrap">
         {user.phone_number ? formatPhoneNumberIntl(user.phone_number) : "-"}

@@ -25,6 +25,16 @@ export interface UserReadMinimal extends UserBase {
   mfa_enabled: boolean;
   deleted: boolean;
   is_service_account: boolean;
+  role_orgs?: Array<{
+    id: string;
+    organization: Organization;
+    role: {
+      id: string;
+      name: string;
+      description: string;
+      is_system: boolean;
+    };
+  }>;
 }
 
 export interface UserRead extends UserReadMinimal {
