@@ -4,11 +4,19 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import useBreakpoints from "@/hooks/useBreakpoints";
 
 import { cn } from "@/lib/utils";
 import FilterRenderer from "./filterRenderer";
@@ -79,61 +87,119 @@ export function SelectedFilterBar({
   const { t } = useTranslation();
   const { filter, selected, selectedOperation, availableOperations } =
     useMultiFilter(selectedFilterKey, selectedFilters);
+  const isMobile = useBreakpoints({ default: true, sm: false });
 
   if (!selectedOperation) return <></>;
 
-  return (
-    <DropdownMenu
-      open={openState || false}
-      onOpenChange={(isOpen) => setOpenState(isOpen)}
+  const filterTrigger = (
+    <div
+      className="flex items-center gap-2 px-3 h-9 border-gray-200 text-sm"
+      onClick={onClick}
     >
-      <div
-        className={cn(
-          "flex items-center bg-white rounded-md border border-gray-200 w-fit",
-          selectedBarClassName,
-        )}
-      >
-        <DropdownMenuTrigger asChild>
+      {filter?.icon}
+      <span className="truncate text-gray-950 font-medium cursor-pointer">
+        {t(filter.label)}
+      </span>
+    </div>
+  );
+
+  const filterEditor = (
+    <FilterRenderer
+      activeFilter={filter.key}
+      selectedFilters={selectedFilters}
+      onFilterChange={onFilterChange}
+      facilityId={facilityId}
+    />
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer
+          open={openState || false}
+          onOpenChange={(isOpen) => setOpenState(isOpen)}
+        >
           <div
-            className="flex items-center gap-2 px-3 h-9 border-gray-200 text-sm"
-            onClick={onClick}
+            className={cn(
+              "flex items-center bg-white rounded-md border border-gray-200 w-fit",
+              selectedBarClassName,
+            )}
           >
-            {filter?.icon}
-            <span className="truncate text-gray-950 font-medium cursor-pointer">
-              {t(filter.label)}
-            </span>
+            <DrawerTrigger asChild>{filterTrigger}</DrawerTrigger>
+            <SubMenuFilter
+              selectedOption={selectedOperation ?? null}
+              setSelectedOption={(operation) =>
+                onOperationChange(
+                  filter.key,
+                  operation.value || operation.label,
+                )
+              }
+              availableOptions={availableOperations ?? []}
+            />
+            <div className="flex items-center gap-2 px-3 h-9 border-gray-200 whitespace-nowrap">
+              <span className="truncate text-gray-950 font-medium">
+                {filter.renderSelected?.(selected, filter, onFilterChange)}
+              </span>
+            </div>
+            {!filter?.disableClear && (
+              <Button
+                variant="ghost"
+                onClick={clearFilter}
+                className="flex border-l rounded-l-none border-gray-200 hover:bg-gray-50"
+              >
+                <X className="h-5 w-5 text-gray-600" />
+              </Button>
+            )}
           </div>
-        </DropdownMenuTrigger>
-        <SubMenuFilter
-          selectedOption={selectedOperation ?? null}
-          setSelectedOption={(operation) =>
-            onOperationChange(filter.key, operation.value || operation.label)
-          }
-          availableOptions={availableOperations ?? []}
-        />
-        <div className="flex items-center gap-2 px-3 h-9 border-gray-200 whitespace-nowrap">
-          <span className="truncate text-gray-950 font-medium">
-            {filter.renderSelected?.(selected, filter, onFilterChange)}
-          </span>
-        </div>
-        {!filter?.disableClear && (
-          <Button
-            variant="ghost"
-            onClick={clearFilter}
-            className="flex border-l rounded-l-none border-gray-200 hover:bg-gray-50"
+          <DrawerContent className="min-h-[50vh] max-h-[85vh] px-0 pt-2 pb-0 rounded-t-lg">
+            <DrawerTitle className="sr-only">{t("filter_options")}</DrawerTitle>
+            <div className="mt-6 pb-[env(safe-area-inset-bottom)] flex-1 overflow-y-auto">
+              {filterEditor}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <DropdownMenu
+          open={openState || false}
+          onOpenChange={(isOpen) => setOpenState(isOpen)}
+        >
+          <div
+            className={cn(
+              "flex items-center bg-white rounded-md border border-gray-200 w-fit",
+              selectedBarClassName,
+            )}
           >
-            <X className="h-5 w-5 text-gray-600" />
-          </Button>
-        )}
-      </div>
-      <DropdownMenuContent className="w-[320px] p-0" align="start">
-        <FilterRenderer
-          activeFilter={filter.key}
-          selectedFilters={selectedFilters}
-          onFilterChange={onFilterChange}
-          facilityId={facilityId}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <DropdownMenuTrigger asChild>{filterTrigger}</DropdownMenuTrigger>
+            <SubMenuFilter
+              selectedOption={selectedOperation ?? null}
+              setSelectedOption={(operation) =>
+                onOperationChange(
+                  filter.key,
+                  operation.value || operation.label,
+                )
+              }
+              availableOptions={availableOperations ?? []}
+            />
+            <div className="flex items-center gap-2 px-3 h-9 border-gray-200 whitespace-nowrap">
+              <span className="truncate text-gray-950 font-medium">
+                {filter.renderSelected?.(selected, filter, onFilterChange)}
+              </span>
+            </div>
+            {!filter?.disableClear && (
+              <Button
+                variant="ghost"
+                onClick={clearFilter}
+                className="flex border-l rounded-l-none border-gray-200 hover:bg-gray-50"
+              >
+                <X className="h-5 w-5 text-gray-600" />
+              </Button>
+            )}
+          </div>
+          <DropdownMenuContent className="w-[320px] p-0" align="start">
+            {filterEditor}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </>
   );
 }
