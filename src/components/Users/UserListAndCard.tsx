@@ -108,14 +108,14 @@ export function UserCard(props: UserCardProps) {
                 {user.username}
               </span>
             </div>
-            {(roleName || editRoleAction) && (
+            {roleName && (
               <div
                 className={cn(
                   "mt-2 -ml-12 sm:ml-0 flex items-center gap-1.5 text-sm",
                   isServiceAccount && "ml-0",
                 )}
               >
-                {roleName && <span className="text-gray-500">{roleName}</span>}
+                <span className="text-gray-500">{roleName}</span>
                 {editRoleAction}
               </div>
             )}
