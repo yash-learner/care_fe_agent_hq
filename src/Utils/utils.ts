@@ -443,3 +443,36 @@ export const goBack = (fallback?: string) => {
   }
   history.back();
 };
+
+/**
+ * Format role_orgs array into a readable display string.
+ * Returns organization names (e.g., "Doctor, Nurse") with optional designation
+ * (e.g., "Doctor · Manager") when role is not default "Member".
+ *
+ * @param roleOrgs - Array of role organization memberships
+ * @returns Formatted string or em dash if empty
+ */
+export const formatRoleOrgLabels = (
+  roleOrgs?: Array<{
+    organization: { name: string };
+    role: { name: string };
+  }> | null,
+): string => {
+  if (!roleOrgs || roleOrgs.length === 0) {
+    return "—";
+  }
+
+  return roleOrgs
+    .map((membership) => {
+      const orgName = membership.organization.name;
+      const roleName = membership.role.name;
+
+      // Append designation if not default "Member"
+      if (roleName && roleName !== "Member") {
+        return `${orgName} · ${roleName}`;
+      }
+
+      return orgName;
+    })
+    .join(", ");
+};
