@@ -74,7 +74,7 @@ test.describe("Healthcare Services Search", () => {
     await page.waitForTimeout(1000);
     
     // Verify empty state is displayed
-    await expect(page.getByText("no_services_found")).toBeVisible();
+    await expect(page.getByText("No services found")).toBeVisible();
   });
 
   test("should display all services when search is cleared", async ({ page }) => {

@@ -92,6 +92,7 @@ const accountId = getAccountId();
 `/facility/${facilityId}/settings/departments`
 `/facility/${facilityId}/settings/devices`
 `/facility/${facilityId}/settings/services`
+`/facility/${facilityId}/services`
 `/facility/${facilityId}/users`
 // Patient pages
 `/facility/${facilityId}/patient/${patientId}/encounter/${encounterId}`
