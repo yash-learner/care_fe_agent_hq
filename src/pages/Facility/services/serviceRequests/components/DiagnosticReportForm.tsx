@@ -139,6 +139,20 @@ export function DiagnosticReportForm({
     diagnosticReports.length > 0 ? diagnosticReports[0] : null;
   const hasReport = !!latestReport;
 
+  // Calculate which codes are already used by existing reports
+  const usedCodes = diagnosticReports
+    .filter((report) => report.code)
+    .map((report) => report.code!.code);
+
+  // Calculate available (unused) codes from the activity definition
+  const availableCodes =
+    activityDefinition?.diagnostic_report_codes?.filter(
+      (code) => !usedCodes.includes(code.code),
+    ) || [];
+
+  // Can create new reports if there are unused codes remaining
+  const canCreateReport = availableCodes.length > 0;
+
   // Check if all required specimens are collected
   const hasCollectedSpecimens =
     activityDefinition?.specimen_requirements?.length === 0 ||
@@ -466,8 +480,8 @@ export function DiagnosticReportForm({
   }
 
   function handleCreateReport() {
-    // Only create a new report if no reports exist
-    if (!hasReport) {
+    // Allow creating new reports as long as there are unused codes remaining
+    if (canCreateReport) {
       if (!hasCollectedSpecimens) {
         toast.error(t("specimen_collection_required"));
         return;
@@ -895,339 +909,485 @@ export function DiagnosticReportForm({
               __name="ServiceRequestAction"
               serviceRequestId={serviceRequestId}
             />
-            {hasReport && fullReport ? (
+            {diagnosticReports.length > 0 ? (
               <div className="space-y-6">
-                {fullReport.status !== DiagnosticReportStatus.final && (
-                  <PLUGIN_Component
-                    __name="DiagnosticReportOverride"
-                    observationDefinitions={observationDefinitions}
-                    handleComponentValueChange={handleComponentValueChange}
-                    handleValueChange={handleValueChange}
-                    handleUnitChange={handleUnitChange}
-                    disabled={disableEdit}
-                  />
-                )}
-                {fullReport.status !== DiagnosticReportStatus.final &&
-                  observationDefinitions.map((definition) => {
-                    const observationsList = observations[definition.id] || [
-                      {
-                        id: "",
-                        value: "",
-                        unit: definition.permitted_unit?.code || "",
-                        interpretation: "",
-                        status: ObservationStatus.AMENDED,
-                        components: {},
-                      },
-                    ];
+                {/* Render all existing diagnostic reports */}
+                {diagnosticReports.map((report, reportIndex) => {
+                  const isLatestReport = reportIndex === 0;
+                  const reportData = isLatestReport ? fullReport : null;
 
+                  // For now, only show the full form for the latest report
+                  // Other reports are shown in a simplified read-only view
+                  if (!isLatestReport) {
                     return (
                       <Card
-                        key={definition.id}
+                        key={report.id}
                         className="mb-4 shadow-none rounded-lg border-gray-200 bg-gray-50"
                       >
                         <CardContent className="p-4">
-                          <div className="grid gap-4">
-                            <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
                               <Label className="text-base font-semibold text-gray-950">
-                                {definition.title || definition.code?.display}
+                                {report.code?.display || t("diagnostic_report")}{" "}
+                                ({report.code?.code || ""})
                               </Label>
+                              <Badge
+                                variant={
+                                  DIAGNOSTIC_REPORT_STATUS_COLORS[report.status]
+                                }
+                              >
+                                {t(report.status)}
+                              </Badge>
                             </div>
-
-                            {observationsList.map((observationData, index) => {
-                              const hasComponents =
-                                definition.component &&
-                                definition.component.length > 0;
-                              const isErrored =
-                                observationData.status ===
-                                ObservationStatus.ENTERED_IN_ERROR;
-                              return (
-                                <div
-                                  key={index}
-                                  className={cn(
-                                    "space-y-1 bg-gray-200/50 p-4 rounded-lg",
-                                    isErrored && "bg-gray-100",
-                                  )}
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <Label className="text-sm font-semibold text-gray-950">
-                                      {t("observation") + " " + (index + 1)}
-                                    </Label>
-                                    {isErrored ? (
-                                      <span className="text-sm text-red-500">
-                                        {t("marked_for_deletion")}
-                                      </span>
-                                    ) : (
-                                      !disableEdit && (
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
-                                          onClick={() =>
-                                            handleDeleteObservation(
-                                              definition.id,
-                                              index,
-                                            )
-                                          }
-                                          disabled={
-                                            isErrored ||
-                                            (index === 0 && !observationData.id)
-                                          }
-                                        >
-                                          <Trash2 className="size-4" />
-                                        </Button>
-                                      )
-                                    )}
-                                  </div>
-
-                                  {/* For blood pressure and similar observations with components, we may or may not need to show the main value field */}
-                                  {!hasComponents && (
-                                    <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-stretch sm:items-center">
-                                      {definition.permitted_unit && (
-                                        <div className="w-full sm:w-32">
-                                          <Label className="text-sm font-medium mb-1 block text-gray-700">
-                                            {t("unit")}
-                                          </Label>
-                                          <Select
-                                            value={observationData.unit}
-                                            onValueChange={(unit) =>
-                                              handleUnitChange(
-                                                definition.id,
-                                                index,
-                                                unit,
-                                              )
-                                            }
-                                            disabled={isErrored || disableEdit}
-                                          >
-                                            <SelectTrigger className="w-full">
-                                              <SelectValue
-                                                placeholder={t("unit")}
-                                              />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem
-                                                value={
-                                                  definition.permitted_unit.code
-                                                }
-                                              >
-                                                {definition.permitted_unit
-                                                  .code ||
-                                                  definition.permitted_unit
-                                                    .display}
-                                              </SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      )}
-
-                                      <div className="flex-1">
-                                        <Label className="text-sm font-medium mb-1 block text-gray-700">
-                                          {t("result")}
-                                        </Label>
-                                        <Input
-                                          value={observationData.value}
-                                          onChange={(e) =>
-                                            handleValueChange(
-                                              definition.id,
-                                              index,
-                                              e.target.value,
-                                              observationData.unit,
-                                            )
-                                          }
-                                          placeholder={t("result_value")}
-                                          type={
-                                            definition.permitted_data_type ===
-                                              "decimal" ||
-                                            definition.permitted_data_type ===
-                                              "integer"
-                                              ? "number"
-                                              : "text"
-                                          }
-                                          disabled={isErrored || disableEdit}
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Render component inputs for multi-component observations */}
-                                  {hasComponents &&
-                                    renderComponentInputs(
-                                      definition,
-                                      observationData,
-                                      index,
-                                    )}
+                            {report.conclusion && (
+                              <div className="mt-2">
+                                <Label className="text-sm font-medium text-gray-700">
+                                  {t("conclusion")}
+                                </Label>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {report.conclusion}
+                                </p>
+                              </div>
+                            )}
+                            {report.observations &&
+                              report.observations.length > 0 && (
+                                <div className="mt-2">
+                                  <Label className="text-sm font-medium text-gray-700">
+                                    {t("observations")} (
+                                    {report.observations.length})
+                                  </Label>
                                 </div>
-                              );
-                            })}
-
-                            {/* Add button for multiple observations */}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setObservations((prev) => {
-                                  const currentList = prev[definition.id] || [];
-                                  return {
-                                    ...prev,
-                                    [definition.id]: [
-                                      ...currentList,
-                                      {
-                                        id: "",
-                                        value: "",
-                                        unit:
-                                          definition.permitted_unit?.code || "",
-                                        status: ObservationStatus.AMENDED,
-                                        components: {},
-                                      },
-                                    ],
-                                  };
-                                });
-                              }}
-                              disabled={disableEdit}
-                            >
-                              <PlusCircle className="size-4 mr-2" />
-                              {t("add_another_result")}
-                            </Button>
+                              )}
                           </div>
                         </CardContent>
                       </Card>
                     );
-                  })}
+                  }
 
-                {fullReport.status !== DiagnosticReportStatus.final && (
-                  <Card className="mb-4 shadow-none rounded-lg border-gray-200 bg-gray-50">
-                    <CardContent className="p-4 space-y-2">
-                      <Label
-                        htmlFor="conclusion"
-                        className="text-base font-semibold text-gray-950"
-                      >
-                        {t("conclusion")}
-                      </Label>
-                      <textarea
-                        id="conclusion"
-                        className="w-full field-sizing-content focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 rounded-lg border border-gray-300 p-2"
-                        placeholder={t("enter_conclusion")}
-                        value={conclusion}
-                        onChange={(e) => setConclusion(e.target.value)}
-                        rows={3}
-                        disabled={disableEdit}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
+                  // Show full editable form for the latest report
+                  return hasReport && fullReport && isLatestReport ? (
+                    <div key={report.id} className="space-y-6">
+                      {fullReport.status !== DiagnosticReportStatus.final && (
+                        <PLUGIN_Component
+                          __name="DiagnosticReportOverride"
+                          observationDefinitions={observationDefinitions}
+                          handleComponentValueChange={
+                            handleComponentValueChange
+                          }
+                          handleValueChange={handleValueChange}
+                          handleUnitChange={handleUnitChange}
+                          disabled={disableEdit}
+                        />
+                      )}
+                      {fullReport.status !== DiagnosticReportStatus.final &&
+                        observationDefinitions.map((definition) => {
+                          const observationsList = observations[
+                            definition.id
+                          ] || [
+                            {
+                              id: "",
+                              value: "",
+                              unit: definition.permitted_unit?.code || "",
+                              interpretation: "",
+                              status: ObservationStatus.AMENDED,
+                              components: {},
+                            },
+                          ];
 
-                <div className="space-y-4">
-                  {fullReport?.status ===
-                    DiagnosticReportStatus.preliminary && (
-                    <div className="flex justify-end space-x-4">
-                      <Button
-                        variant="primary"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || disableEdit}
-                      >
-                        <Save className="size-4 mr-2" />
-                        {t("save_results")}
-                      </Button>
-                    </div>
-                  )}
-                  {files?.results && files.results.length > 0 && (
-                    <div className="mt-3">
-                      <div className="text-lg font-medium">
-                        {t("uploaded_files")}
-                      </div>
-                      <FileListTable
-                        files={files.results}
-                        type="diagnostic_report"
-                        associatingId={fullReport.id}
-                        canEdit={!disableEdit}
-                        showHeader={false}
-                      />
-                    </div>
-                  )}
-
-                  {fullReport?.status ===
-                    DiagnosticReportStatus.preliminary && (
-                    <div className="space-y-5">
-                      <DottedDivider className=" text-gray-500" />
-                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm mt-2">
-                        <div className="flex flex-col items-center text-center">
-                          <h3 className="text-base font-semibold text-gray-950">
-                            {t("attach_result_files")}
-                          </h3>
-                          <p className="mt-1.5 text-sm text-gray-600">
-                            {t("add_supporting_photos_or_documents", {
-                              formats:
-                                BACKEND_ALLOWED_EXTENSIONS.slice(0, 5)
-                                  .join(", ")
-                                  .toUpperCase() + `, ${t("etc")}`,
-                            })}
-                          </p>
-                          <div className="mt-4 flex flex-col sm:flex-row gap-3 w-full sm:items-center sm:justify-center">
-                            <Button
-                              variant="outline"
-                              className=" border-gray-300 bg-white font-semibold text-gray-950 shadow-sm hover:bg-white"
-                              disabled={disableEdit}
-                              onClick={() => fileUpload.handleCameraCapture()}
+                          return (
+                            <Card
+                              key={definition.id}
+                              className="mb-4 shadow-none rounded-lg border-gray-200 bg-gray-50"
                             >
-                              <Camera className="size-4" />
-                              {t("take_photo")}
-                            </Button>
-                            <Button
-                              asChild
-                              variant="outline"
-                              className={cn(
-                                "border-gray-300 bg-white font-semibold text-gray-950 shadow-sm hover:bg-white",
-                                disableEdit
-                                  ? "pointer-events-none opacity-50"
-                                  : "cursor-pointer",
-                              )}
+                              <CardContent className="p-4">
+                                <div className="grid gap-4">
+                                  <div className="flex justify-between items-start">
+                                    <Label className="text-base font-semibold text-gray-950">
+                                      {definition.title ||
+                                        definition.code?.display}
+                                    </Label>
+                                  </div>
+
+                                  {observationsList.map(
+                                    (observationData, index) => {
+                                      const hasComponents =
+                                        definition.component &&
+                                        definition.component.length > 0;
+                                      const isErrored =
+                                        observationData.status ===
+                                        ObservationStatus.ENTERED_IN_ERROR;
+                                      return (
+                                        <div
+                                          key={index}
+                                          className={cn(
+                                            "space-y-1 bg-gray-200/50 p-4 rounded-lg",
+                                            isErrored && "bg-gray-100",
+                                          )}
+                                        >
+                                          <div className="flex justify-between items-center">
+                                            <Label className="text-sm font-semibold text-gray-950">
+                                              {t("observation") +
+                                                " " +
+                                                (index + 1)}
+                                            </Label>
+                                            {isErrored ? (
+                                              <span className="text-sm text-red-500">
+                                                {t("marked_for_deletion")}
+                                              </span>
+                                            ) : (
+                                              !disableEdit && (
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-2"
+                                                  onClick={() =>
+                                                    handleDeleteObservation(
+                                                      definition.id,
+                                                      index,
+                                                    )
+                                                  }
+                                                  disabled={
+                                                    isErrored ||
+                                                    (index === 0 &&
+                                                      !observationData.id)
+                                                  }
+                                                >
+                                                  <Trash2 className="size-4" />
+                                                </Button>
+                                              )
+                                            )}
+                                          </div>
+
+                                          {/* For blood pressure and similar observations with components, we may or may not need to show the main value field */}
+                                          {!hasComponents && (
+                                            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-stretch sm:items-center">
+                                              {definition.permitted_unit && (
+                                                <div className="w-full sm:w-32">
+                                                  <Label className="text-sm font-medium mb-1 block text-gray-700">
+                                                    {t("unit")}
+                                                  </Label>
+                                                  <Select
+                                                    value={observationData.unit}
+                                                    onValueChange={(unit) =>
+                                                      handleUnitChange(
+                                                        definition.id,
+                                                        index,
+                                                        unit,
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      isErrored || disableEdit
+                                                    }
+                                                  >
+                                                    <SelectTrigger className="w-full">
+                                                      <SelectValue
+                                                        placeholder={t("unit")}
+                                                      />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      <SelectItem
+                                                        value={
+                                                          definition
+                                                            .permitted_unit.code
+                                                        }
+                                                      >
+                                                        {definition
+                                                          .permitted_unit
+                                                          .code ||
+                                                          definition
+                                                            .permitted_unit
+                                                            .display}
+                                                      </SelectItem>
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                              )}
+
+                                              <div className="flex-1">
+                                                <Label className="text-sm font-medium mb-1 block text-gray-700">
+                                                  {t("result")}
+                                                </Label>
+                                                <Input
+                                                  value={observationData.value}
+                                                  onChange={(e) =>
+                                                    handleValueChange(
+                                                      definition.id,
+                                                      index,
+                                                      e.target.value,
+                                                      observationData.unit,
+                                                    )
+                                                  }
+                                                  placeholder={t(
+                                                    "result_value",
+                                                  )}
+                                                  type={
+                                                    definition.permitted_data_type ===
+                                                      "decimal" ||
+                                                    definition.permitted_data_type ===
+                                                      "integer"
+                                                      ? "number"
+                                                      : "text"
+                                                  }
+                                                  disabled={
+                                                    isErrored || disableEdit
+                                                  }
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Render component inputs for multi-component observations */}
+                                          {hasComponents &&
+                                            renderComponentInputs(
+                                              definition,
+                                              observationData,
+                                              index,
+                                            )}
+                                        </div>
+                                      );
+                                    },
+                                  )}
+
+                                  {/* Add button for multiple observations */}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setObservations((prev) => {
+                                        const currentList =
+                                          prev[definition.id] || [];
+                                        return {
+                                          ...prev,
+                                          [definition.id]: [
+                                            ...currentList,
+                                            {
+                                              id: "",
+                                              value: "",
+                                              unit:
+                                                definition.permitted_unit
+                                                  ?.code || "",
+                                              status: ObservationStatus.AMENDED,
+                                              components: {},
+                                            },
+                                          ],
+                                        };
+                                      });
+                                    }}
+                                    disabled={disableEdit}
+                                  >
+                                    <PlusCircle className="size-4 mr-2" />
+                                    {t("add_another_result")}
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+
+                      {fullReport.status !== DiagnosticReportStatus.final && (
+                        <Card className="mb-4 shadow-none rounded-lg border-gray-200 bg-gray-50">
+                          <CardContent className="p-4 space-y-2">
+                            <Label
+                              htmlFor="conclusion"
+                              className="text-base font-semibold text-gray-950"
                             >
-                              <Label
-                                htmlFor={
-                                  disableEdit
-                                    ? undefined
-                                    : "file_upload_diagnostic_report"
-                                }
-                              >
-                                <Upload className="size-4" />
-                                {t("upload_files")}
-                              </Label>
-                            </Button>
-                            <fileUpload.Input
-                              className="hidden"
+                              {t("conclusion")}
+                            </Label>
+                            <textarea
+                              id="conclusion"
+                              className="w-full field-sizing-content focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 rounded-lg border border-gray-300 p-2"
+                              placeholder={t("enter_conclusion")}
+                              value={conclusion}
+                              onChange={(e) => setConclusion(e.target.value)}
+                              rows={3}
                               disabled={disableEdit}
                             />
-                          </div>
+                          </CardContent>
+                        </Card>
+                      )}
 
-                          {fileUpload.files.length > 0 && (
-                            <div className="mt-5 w-full max-w-md space-y-2">
-                              <div
-                                className="truncate text-sm text-gray-600"
-                                title={fileUpload.files
-                                  .map((file) => file.name)
-                                  .join(", ")}
-                              >
-                                {fileUpload.files
-                                  .map((file) => file.name)
-                                  .join(", ")}
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full border-gray-300 bg-white"
-                                disabled={disableEdit}
-                                onClick={() => fileUpload.clearFiles()}
-                              >
-                                {t("clear")}
-                              </Button>
+                      <div className="space-y-4">
+                        {fullReport?.status ===
+                          DiagnosticReportStatus.preliminary && (
+                          <div className="flex justify-end space-x-4">
+                            <Button
+                              variant="primary"
+                              onClick={handleSubmit}
+                              disabled={isSubmitting || disableEdit}
+                            >
+                              <Save className="size-4 mr-2" />
+                              {t("save_results")}
+                            </Button>
+                          </div>
+                        )}
+                        {files?.results && files.results.length > 0 && (
+                          <div className="mt-3">
+                            <div className="text-lg font-medium">
+                              {t("uploaded_files")}
                             </div>
-                          )}
-                        </div>
+                            <FileListTable
+                              files={files.results}
+                              type="diagnostic_report"
+                              associatingId={fullReport.id}
+                              canEdit={!disableEdit}
+                              showHeader={false}
+                            />
+                          </div>
+                        )}
+
+                        {fullReport?.status ===
+                          DiagnosticReportStatus.preliminary && (
+                          <div className="space-y-5">
+                            <DottedDivider className=" text-gray-500" />
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-6 py-5 shadow-sm mt-2">
+                              <div className="flex flex-col items-center text-center">
+                                <h3 className="text-base font-semibold text-gray-950">
+                                  {t("attach_result_files")}
+                                </h3>
+                                <p className="mt-1.5 text-sm text-gray-600">
+                                  {t("add_supporting_photos_or_documents", {
+                                    formats:
+                                      BACKEND_ALLOWED_EXTENSIONS.slice(0, 5)
+                                        .join(", ")
+                                        .toUpperCase() + `, ${t("etc")}`,
+                                  })}
+                                </p>
+                                <div className="mt-4 flex flex-col sm:flex-row gap-3 w-full sm:items-center sm:justify-center">
+                                  <Button
+                                    variant="outline"
+                                    className=" border-gray-300 bg-white font-semibold text-gray-950 shadow-sm hover:bg-white"
+                                    disabled={disableEdit}
+                                    onClick={() =>
+                                      fileUpload.handleCameraCapture()
+                                    }
+                                  >
+                                    <Camera className="size-4" />
+                                    {t("take_photo")}
+                                  </Button>
+                                  <Button
+                                    asChild
+                                    variant="outline"
+                                    className={cn(
+                                      "border-gray-300 bg-white font-semibold text-gray-950 shadow-sm hover:bg-white",
+                                      disableEdit
+                                        ? "pointer-events-none opacity-50"
+                                        : "cursor-pointer",
+                                    )}
+                                  >
+                                    <Label
+                                      htmlFor={
+                                        disableEdit
+                                          ? undefined
+                                          : "file_upload_diagnostic_report"
+                                      }
+                                    >
+                                      <Upload className="size-4" />
+                                      {t("upload_files")}
+                                    </Label>
+                                  </Button>
+                                  <fileUpload.Input
+                                    className="hidden"
+                                    disabled={disableEdit}
+                                  />
+                                </div>
+
+                                {fileUpload.files.length > 0 && (
+                                  <div className="mt-5 w-full max-w-md space-y-2">
+                                    <div
+                                      className="truncate text-sm text-gray-600"
+                                      title={fileUpload.files
+                                        .map((file) => file.name)
+                                        .join(", ")}
+                                    >
+                                      {fileUpload.files
+                                        .map((file) => file.name)
+                                        .join(", ")}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="w-full border-gray-300 bg-white"
+                                      disabled={disableEdit}
+                                      onClick={() => fileUpload.clearFiles()}
+                                    >
+                                      {t("clear")}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  ) : null;
+                })}
+
+                {/* Show create form when more reports can be created */}
+                {canCreateReport && (
+                  <div className="space-y-4 bg-gray-50 rounded-lg p-4 mt-6">
+                    <div className="text-gray-500 flex justify-center items-center">
+                      <p className="mt-2 text-sm text-gray-500 text-center">
+                        {t("create_additional_diagnostic_report")}
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
+                      {activityDefinition?.diagnostic_report_codes &&
+                        activityDefinition.diagnostic_report_codes.length >
+                          0 && (
+                          <div className="flex-1 min-w-0">
+                            <Select
+                              value={selectedReportCode?.code}
+                              onValueChange={(value) => {
+                                const code = availableCodes.find(
+                                  (c) => c.code === value,
+                                );
+                                setSelectedReportCode(code || null);
+                              }}
+                              disabled={!hasCollectedSpecimens || disableEdit}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue
+                                  placeholder={t(
+                                    "select_diagnostic_report_type",
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableCodes.map((code) => (
+                                  <SelectItem key={code.code} value={code.code}>
+                                    <div className="flex flex-col">
+                                      <span className="truncate">
+                                        {code.display} ({code.code})
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      <Button
+                        onClick={handleCreateReport}
+                        disabled={
+                          disableEdit ||
+                          isCreatingReport ||
+                          !hasCollectedSpecimens ||
+                          !canCreateReport ||
+                          (!!activityDefinition?.diagnostic_report_codes
+                            ?.length &&
+                            !selectedReportCode)
+                        }
+                        className="w-full sm:w-auto sm:shrink-0"
+                      >
+                        <PlusCircle className="size-4 mr-2" />
+                        {t("create_report")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4 bg-gray-50 rounded-lg p-4">
@@ -1245,10 +1405,9 @@ export function DiagnosticReportForm({
                         <Select
                           value={selectedReportCode?.code}
                           onValueChange={(value) => {
-                            const code =
-                              activityDefinition.diagnostic_report_codes?.find(
-                                (c) => c.code === value,
-                              );
+                            const code = availableCodes.find(
+                              (c) => c.code === value,
+                            );
                             setSelectedReportCode(code || null);
                           }}
                           disabled={!hasCollectedSpecimens || disableEdit}
@@ -1259,17 +1418,15 @@ export function DiagnosticReportForm({
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            {activityDefinition.diagnostic_report_codes.map(
-                              (code) => (
-                                <SelectItem key={code.code} value={code.code}>
-                                  <div className="flex flex-col">
-                                    <span className="truncate">
-                                      {code.display} ({code.code})
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ),
-                            )}
+                            {availableCodes.map((code) => (
+                              <SelectItem key={code.code} value={code.code}>
+                                <div className="flex flex-col">
+                                  <span className="truncate">
+                                    {code.display} ({code.code})
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1280,6 +1437,7 @@ export function DiagnosticReportForm({
                       disableEdit ||
                       isCreatingReport ||
                       !hasCollectedSpecimens ||
+                      !canCreateReport ||
                       (!!activityDefinition?.diagnostic_report_codes?.length &&
                         !selectedReportCode)
                     }
