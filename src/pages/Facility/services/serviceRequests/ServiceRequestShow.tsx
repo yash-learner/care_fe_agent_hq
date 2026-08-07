@@ -267,6 +267,19 @@ export default function ServiceRequestShow({
     activityDefinition.observation_result_requirements ?? [];
   const diagnosticReports = request.diagnostic_reports || [];
 
+  // Check if there are unused diagnostic report codes
+  const hasUnusedCodes = (() => {
+    if (!activityDefinition?.diagnostic_report_codes?.length) {
+      return true; // No codes defined, allow report creation
+    }
+    const usedCodes = new Set(
+      diagnosticReports.map((r) => r.code?.code).filter(Boolean),
+    );
+    return activityDefinition.diagnostic_report_codes.some(
+      (c) => !usedCodes.has(c.code),
+    );
+  })();
+
   const assignedSpecimenIds = new Set<string>();
 
   const preparePrintAllQRCodes = async () => {
@@ -596,9 +609,7 @@ export default function ServiceRequestShow({
                 </DropdownMenu>
               </div>
             )}
-            {(!diagnosticReports.length ||
-              diagnosticReports[0]?.status !==
-                DiagnosticReportStatus.final) && (
+            {hasUnusedCodes && (
               <DiagnosticReportForm
                 patientId={request.encounter.patient.id}
                 facilityId={facilityId}
