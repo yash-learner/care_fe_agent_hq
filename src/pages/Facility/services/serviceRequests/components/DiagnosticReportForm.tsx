@@ -139,6 +139,24 @@ export function DiagnosticReportForm({
     diagnosticReports.length > 0 ? diagnosticReports[0] : null;
   const hasReport = !!latestReport;
 
+  // Calculate remaining diagnostic report codes (codes not yet used)
+  const usedCodes = new Set(
+    diagnosticReports
+      .filter((report) => report.code)
+      .map((report) => report.code!.code),
+  );
+  const remainingCodes =
+    activityDefinition?.diagnostic_report_codes?.filter(
+      (code) => !usedCodes.has(code.code),
+    ) || [];
+
+  // Determine if we should show the create form
+  // Show if: no reports exist, OR reports exist but there are remaining codes AND latest isn't final
+  const shouldShowCreateForm =
+    !hasReport ||
+    (remainingCodes.length > 0 &&
+      (!latestReport || latestReport.status !== DiagnosticReportStatus.final));
+
   // Check if all required specimens are collected
   const hasCollectedSpecimens =
     activityDefinition?.specimen_requirements?.length === 0 ||
@@ -466,26 +484,36 @@ export function DiagnosticReportForm({
   }
 
   function handleCreateReport() {
-    // Only create a new report if no reports exist
-    if (!hasReport) {
-      if (!hasCollectedSpecimens) {
-        toast.error(t("specimen_collection_required"));
-        return;
-      }
-
-      const category: Code = {
-        code: "LAB",
-        display: "Laboratory",
-        system: "http://terminology.hl7.org/CodeSystem/v2-0074",
-      };
-
-      createDiagnosticReport({
-        status: DiagnosticReportStatus.preliminary,
-        category,
-        service_request: serviceRequestId,
-        code: selectedReportCode || undefined,
-      });
+    // Allow creating new reports if there are remaining unused codes
+    if (!hasCollectedSpecimens) {
+      toast.error(t("specimen_collection_required"));
+      return;
     }
+
+    // Validate that a code is selected if codes are available
+    if (remainingCodes.length > 0 && !selectedReportCode) {
+      toast.error(t("please_select_diagnostic_report_type"));
+      return;
+    }
+
+    // Prevent creating a duplicate report with the same code
+    if (selectedReportCode && usedCodes.has(selectedReportCode.code)) {
+      toast.error(t("diagnostic_report_code_already_used"));
+      return;
+    }
+
+    const category: Code = {
+      code: "LAB",
+      display: "Laboratory",
+      system: "http://terminology.hl7.org/CodeSystem/v2-0074",
+    };
+
+    createDiagnosticReport({
+      status: DiagnosticReportStatus.preliminary,
+      category,
+      service_request: serviceRequestId,
+      code: selectedReportCode || undefined,
+    });
   }
 
   function handleSubmit() {
@@ -1229,59 +1257,56 @@ export function DiagnosticReportForm({
                   )}
                 </div>
               </div>
-            ) : (
+            ) : shouldShowCreateForm ? (
               <div className="space-y-4 bg-gray-50 rounded-lg p-4">
                 <div className="text-gray-500 flex justify-center items-center">
                   <p className="mt-2 text-sm text-gray-500 text-center">
                     {!hasCollectedSpecimens
                       ? t("collect_specimen_before_report")
-                      : t("no_test_results_recorded")}
+                      : hasReport
+                        ? t("create_additional_diagnostic_report")
+                        : t("no_test_results_recorded")}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
-                  {activityDefinition?.diagnostic_report_codes &&
-                    activityDefinition.diagnostic_report_codes.length > 0 && (
-                      <div className="flex-1 min-w-0">
-                        <Select
-                          value={selectedReportCode?.code}
-                          onValueChange={(value) => {
-                            const code =
-                              activityDefinition.diagnostic_report_codes?.find(
-                                (c) => c.code === value,
-                              );
-                            setSelectedReportCode(code || null);
-                          }}
-                          disabled={!hasCollectedSpecimens || disableEdit}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue
-                              placeholder={t("select_diagnostic_report_type")}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {activityDefinition.diagnostic_report_codes.map(
-                              (code) => (
-                                <SelectItem key={code.code} value={code.code}>
-                                  <div className="flex flex-col">
-                                    <span className="truncate">
-                                      {code.display} ({code.code})
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                  {remainingCodes.length > 0 && (
+                    <div className="flex-1 min-w-0">
+                      <Select
+                        value={selectedReportCode?.code}
+                        onValueChange={(value) => {
+                          const code = remainingCodes.find(
+                            (c) => c.code === value,
+                          );
+                          setSelectedReportCode(code || null);
+                        }}
+                        disabled={!hasCollectedSpecimens || disableEdit}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t("select_diagnostic_report_type")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {remainingCodes.map((code) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              <div className="flex flex-col">
+                                <span className="truncate">
+                                  {code.display} ({code.code})
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <Button
                     onClick={handleCreateReport}
                     disabled={
                       disableEdit ||
                       isCreatingReport ||
                       !hasCollectedSpecimens ||
-                      (!!activityDefinition?.diagnostic_report_codes?.length &&
-                        !selectedReportCode)
+                      (remainingCodes.length > 0 && !selectedReportCode)
                     }
                     className="w-full sm:w-auto sm:shrink-0"
                   >
@@ -1290,7 +1315,7 @@ export function DiagnosticReportForm({
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
