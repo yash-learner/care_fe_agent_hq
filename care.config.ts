@@ -79,8 +79,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -407,6 +406,46 @@ const careConfig = {
   maxFormDialogFavorites: env.REACT_MAX_FORM_DIALOG_FAVORITES
     ? parseInt(env.REACT_MAX_FORM_DIALOG_FAVORITES, 10)
     : 5,
+
+  /**
+   * Custom navigation links from environment variables
+   * Format: JSON array with link objects containing name, url, and optional icon
+   * Links are displayed after core nav items but before plugin items
+   */
+  navLinks: (() => {
+    if (!env.REACT_NAV_LINKS) return [];
+
+    try {
+      const links = JSON.parse(env.REACT_NAV_LINKS);
+
+      if (!Array.isArray(links)) {
+        console.warn(
+          "REACT_NAV_LINKS must be a JSON array. Navigation links will not be rendered.",
+        );
+        return [];
+      }
+
+      // Validate each link has required fields
+      const validLinks = links.filter((link) => {
+        if (!link.name || !link.url) {
+          console.warn(
+            "REACT_NAV_LINKS: Each link must have 'name' and 'url' properties. Skipping invalid link:",
+            link,
+          );
+          return false;
+        }
+        return true;
+      });
+
+      return validLinks;
+    } catch (error) {
+      console.warn(
+        "REACT_NAV_LINKS: Invalid JSON format. Navigation links will not be rendered.",
+        error,
+      );
+      return [];
+    }
+  })(),
 } as const;
 
 export default careConfig;
