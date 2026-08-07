@@ -33,6 +33,7 @@ function generateFacilityLinks(
   },
   pluginLinks: NavigationLink[],
   pluginBillingLinks: NavigationLink[],
+  envLinks: NavigationLink[],
 ) {
   if (!selectedFacility) return [];
 
@@ -201,12 +202,14 @@ function generateFacilityLinks(
     },
   ];
 
+  // Merge order: core facility links → plugin nav items → env-configured links
   return [
     ...links,
     ...pluginLinks.map((l) => ({
       ...l,
       url: `${baseUrl}/${l.url}`,
     })),
+    ...envLinks,
   ];
 }
 
@@ -242,6 +245,13 @@ export function FacilityNav({ selectedFacility }: FacilityNavProps) {
     canListTokenCategories,
     canListTemplate,
   };
+
+  // Combine env-configured links (general + NABH)
+  const envLinks = [
+    ...careConfig.navLinks,
+    ...(careConfig.nabhLink ? [careConfig.nabhLink] : []),
+  ] as NavigationLink[];
+
   return (
     <NavMain
       links={generateFacilityLinks(
@@ -250,6 +260,7 @@ export function FacilityNav({ selectedFacility }: FacilityNavProps) {
         permissions,
         pluginNavItems,
         pluginBillingNavItems,
+        envLinks,
       )}
     />
   );

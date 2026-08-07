@@ -52,6 +52,7 @@ export interface NavigationLink {
   icon?: ReactNode;
   visibility?: boolean;
   children?: NavigationLink[];
+  external?: boolean;
 }
 
 function NavLink({
@@ -61,6 +62,7 @@ function NavLink({
   exactActiveClass,
   className,
   onClick,
+  external,
   children,
 }: {
   href: string;
@@ -69,10 +71,30 @@ function NavLink({
   exactActiveClass?: string;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
+  external?: boolean;
   children: ReactNode;
 }) {
   const resolvedExact = exactActiveClass ?? activeClass;
   const { toggleSidebar, isMobile } = useSidebar();
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        onClick={(e) => {
+          if (isMobile) {
+            toggleSidebar();
+          }
+          onClick?.(e);
+        }}
+      >
+        {children}
+      </a>
+    );
+  }
 
   return (
     <ActiveLink
@@ -147,6 +169,7 @@ export function NavMain({ links }: { links: NavigationLink[] }) {
                       href={link.url}
                       isSelected={isSelected(link.url)}
                       activeClass="bg-white text-green-700 shadow-sm"
+                      external={link.external}
                     >
                       {link.icon ? (
                         link.icon
@@ -240,6 +263,7 @@ function CollapsibleNavItem({
                             "bg-white text-green-700 shadow",
                         )}
                         exactActiveClass="bg-white text-green-700 shadow"
+                        external={subItem.external}
                       >
                         {subItem.name}
                       </NavLink>
@@ -271,6 +295,7 @@ function NavItem({
       className="w-full rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100"
       activeClass="bg-gray-100 text-green-700"
       onClick={() => setOpen(false)}
+      external={item.external}
     >
       {item.name}
     </NavLink>

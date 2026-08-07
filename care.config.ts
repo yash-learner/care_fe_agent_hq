@@ -79,8 +79,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -305,6 +304,60 @@ const careConfig = {
   customShortcuts: env.REACT_CUSTOM_SHORTCUTS
     ? JSON.parse(env.REACT_CUSTOM_SHORTCUTS)
     : [],
+
+  /**
+   * Environment-configured navigation links for left sidebar
+   * Format: JSON array of NavigationLink objects
+   * Example: '[{"name":"Documentation","url":"https://docs.example.com","external":true}]'
+   * Fields: name (required), url (required), external (optional), icon (optional), visibility (optional)
+   */
+  navLinks: (() => {
+    if (!env.REACT_NAV_LINKS) return [];
+    try {
+      const links = JSON.parse(env.REACT_NAV_LINKS);
+      if (!Array.isArray(links)) {
+        console.warn("REACT_NAV_LINKS must be a JSON array");
+        return [];
+      }
+      return links.filter((link: any) => {
+        if (!link.name || !link.url) {
+          console.warn(
+            "Skipping invalid nav link: missing required fields (name, url)",
+            link,
+          );
+          return false;
+        }
+        return true;
+      });
+    } catch (error) {
+      console.warn("Failed to parse REACT_NAV_LINKS:", error);
+      return [];
+    }
+  })(),
+
+  /**
+   * Optional NABH/certification link for left sidebar
+   * Format: JSON object with NavigationLink structure
+   * Example: '{"name":"NABH Certification","url":"https://nabh.example.com/cert.pdf","external":true}'
+   * Fields: name (required), url (required), external (optional), icon (optional)
+   */
+  nabhLink: (() => {
+    if (!env.REACT_NABH_LINK) return null;
+    try {
+      const link = JSON.parse(env.REACT_NABH_LINK);
+      if (!link.name || !link.url) {
+        console.warn(
+          "Invalid REACT_NABH_LINK: missing required fields (name, url)",
+        );
+        return null;
+      }
+      return link;
+    } catch (error) {
+      console.warn("Failed to parse REACT_NABH_LINK:", error);
+      return null;
+    }
+  })(),
+
   /**
    * System identifier for patient phone number configuration
    */
