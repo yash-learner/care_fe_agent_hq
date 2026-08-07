@@ -19,6 +19,7 @@ export async function createHealthcareService(
     .filter({ hasText: "Select locations" })
     .click();
   await page.getByPlaceholder("Search locations...").fill("Pharmacy");
+  // Select the first button with empty text in dialog (the location checkbox/selection)
   await page
     .getByRole("dialog")
     .getByRole("button")

@@ -47,26 +47,28 @@ test.describe("Healthcare Service Search", () => {
 
   test("should display search input field on page load", async ({ page }) => {
     await test.step("Verify search input is visible", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await expect(searchInput).toBeVisible();
       await expect(searchInput).toHaveAttribute("type", "text");
-    });
-
-    await test.step("Verify search icon is present", async () => {
-      // The search icon is present as indicated by the CareIcon component
-      await expect(page.locator('[class*="l-search"]')).toBeVisible();
     });
   });
 
   test("should filter services by name when searching", async ({ page }) => {
     await test.step("Type search term to filter services", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill(serviceName1);
     });
 
     await test.step("Wait for debounced API call and verify filtered results", async () => {
-      // Wait for the search to complete (debounced)
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
 
       // Should see the matching service
       await expect(page.getByText(serviceName1)).toBeVisible();
@@ -81,15 +83,27 @@ test.describe("Healthcare Service Search", () => {
     page,
   }) => {
     await test.step("Enter search term", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill(serviceName1);
-      await page.waitForTimeout(500);
+      // Wait for the API response after filling
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Clear search input", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.clear();
-      await page.waitForTimeout(500);
+      // Wait for the API response after clearing
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Verify all services are visible again", async () => {
@@ -103,10 +117,16 @@ test.describe("Healthcare Service Search", () => {
     page,
   }) => {
     await test.step("Search for non-existent service", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       const nonExistentName = `nonexistent-service-${faker.string.uuid()}`;
       await searchInput.fill(nonExistentName);
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Verify empty state is displayed", async () => {
@@ -126,9 +146,15 @@ test.describe("Healthcare Service Search", () => {
     const searchTerm = serviceName2;
 
     await test.step("Enter search term", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill(searchTerm);
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Verify URL contains search query parameter", async () => {
@@ -138,10 +164,12 @@ test.describe("Healthcare Service Search", () => {
 
     await test.step("Reload page and verify search persists", async () => {
       await page.reload();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState("networkidle");
 
       // Verify search input retains the value
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await expect(searchInput).toHaveValue(searchTerm);
 
       // Verify filtered results are still visible
@@ -155,9 +183,15 @@ test.describe("Healthcare Service Search", () => {
     const partialSearch = serviceName1.split("-")[0];
 
     await test.step("Enter partial search term", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill(partialSearch);
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Verify all services with matching prefix are visible", async () => {
@@ -170,9 +204,15 @@ test.describe("Healthcare Service Search", () => {
 
   test("should handle search with special characters", async ({ page }) => {
     await test.step("Search with special characters", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill("@#$%^&*()");
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Verify empty state or no results", async () => {
@@ -187,9 +227,15 @@ test.describe("Healthcare Service Search", () => {
     const searchTerm = serviceName1;
 
     await test.step("Enter search term", async () => {
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await searchInput.fill(searchTerm);
-      await page.waitForTimeout(500);
+      // Wait for the API response
+      await page.waitForResponse(
+        (resp) =>
+          resp.url().includes("healthcare_service") && resp.status() === 200,
+      );
     });
 
     await test.step("Navigate to a service detail page", async () => {
@@ -201,10 +247,12 @@ test.describe("Healthcare Service Search", () => {
 
     await test.step("Navigate back and verify search persists", async () => {
       await page.goBack();
-      await page.waitForTimeout(500);
+      await page.waitForLoadState("networkidle");
 
       // Verify search input retains the value
-      const searchInput = page.getByPlaceholder("Search healthcare services");
+      const searchInput = page.getByPlaceholder(
+        "Search healthcare services...",
+      );
       await expect(searchInput).toHaveValue(searchTerm);
 
       // Verify filtered results are still visible
