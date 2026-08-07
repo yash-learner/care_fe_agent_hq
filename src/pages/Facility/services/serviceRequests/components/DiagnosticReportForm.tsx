@@ -182,6 +182,7 @@ export function DiagnosticReportForm({
       }),
       onSuccess: () => {
         toast.success(t("diagnostic_report_created_successfully"));
+        setSelectedReportCode(null); // Reset selection for next report
         queryClient.invalidateQueries({
           queryKey: ["serviceRequest"],
         });
@@ -1239,28 +1240,39 @@ export function DiagnosticReportForm({
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
-                  {activityDefinition?.diagnostic_report_codes &&
-                    activityDefinition.diagnostic_report_codes.length > 0 && (
-                      <div className="flex-1 min-w-0">
-                        <Select
-                          value={selectedReportCode?.code}
-                          onValueChange={(value) => {
-                            const code =
-                              activityDefinition.diagnostic_report_codes?.find(
+                  {(() => {
+                    // Calculate available codes by filtering out already used codes
+                    const usedCodes = new Set(
+                      diagnosticReports
+                        .map((report) => report.code?.code)
+                        .filter(Boolean),
+                    );
+
+                    const availableCodes =
+                      activityDefinition?.diagnostic_report_codes?.filter(
+                        (code) => !usedCodes.has(code.code),
+                      ) || [];
+
+                    return (
+                      availableCodes.length > 0 && (
+                        <div className="flex-1 min-w-0">
+                          <Select
+                            value={selectedReportCode?.code}
+                            onValueChange={(value) => {
+                              const code = availableCodes.find(
                                 (c) => c.code === value,
                               );
-                            setSelectedReportCode(code || null);
-                          }}
-                          disabled={!hasCollectedSpecimens || disableEdit}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue
-                              placeholder={t("select_diagnostic_report_type")}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {activityDefinition.diagnostic_report_codes.map(
-                              (code) => (
+                              setSelectedReportCode(code || null);
+                            }}
+                            disabled={!hasCollectedSpecimens || disableEdit}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder={t("select_diagnostic_report_type")}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableCodes.map((code) => (
                                 <SelectItem key={code.code} value={code.code}>
                                   <div className="flex flex-col">
                                     <span className="truncate">
@@ -1268,12 +1280,13 @@ export function DiagnosticReportForm({
                                     </span>
                                   </div>
                                 </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )
+                    );
+                  })()}
                   <Button
                     onClick={handleCreateReport}
                     disabled={
