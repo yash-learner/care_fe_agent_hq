@@ -1282,7 +1282,9 @@ export function DiagnosticReportForm({
                           disableEdit ||
                           isCreatingReport ||
                           !hasCollectedSpecimens ||
-                          !hasUnusedCodes ||
+                          (!hasUnusedCodes &&
+                            !!activityDefinition?.diagnostic_report_codes
+                              ?.length) ||
                           (!!unusedReportCodes.length && !selectedReportCode)
                         }
                         className="w-full sm:w-auto sm:shrink-0"
@@ -1341,7 +1343,9 @@ export function DiagnosticReportForm({
                       disableEdit ||
                       isCreatingReport ||
                       !hasCollectedSpecimens ||
-                      !hasUnusedCodes ||
+                      (!hasUnusedCodes &&
+                        !!activityDefinition?.diagnostic_report_codes
+                          ?.length) ||
                       (!!unusedReportCodes.length && !selectedReportCode)
                     }
                     className="w-full sm:w-auto sm:shrink-0"
