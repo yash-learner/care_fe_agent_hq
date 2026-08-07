@@ -132,12 +132,25 @@ export function DiagnosticReportForm({
   );
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [conclusion, setConclusion] = useState<string>("");
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Get the latest report if any exists
-  const latestReport =
-    diagnosticReports.length > 0 ? diagnosticReports[0] : null;
-  const hasReport = !!latestReport;
+  // Get the active report, defaulting to the first report if none is selected
+  const activeReport =
+    diagnosticReports.find((r) => r.id === activeReportId) ||
+    diagnosticReports[0] ||
+    null;
+  const hasReport = diagnosticReports.length > 0;
+
+  // Calculate available codes (those not yet used by existing reports)
+  const usedCodes = new Set(
+    diagnosticReports.map((r) => r.code?.code).filter(Boolean),
+  );
+  const availableCodes =
+    activityDefinition?.diagnostic_report_codes?.filter(
+      (code) => !usedCodes.has(code.code),
+    ) || [];
+  const canCreateMoreReports = availableCodes.length > 0;
 
   // Check if all required specimens are collected
   const hasCollectedSpecimens =
@@ -146,14 +159,14 @@ export function DiagnosticReportForm({
 
   // Fetch the full diagnostic report to get observations
   const { data: fullReport, isLoading: isLoadingReport } = useQuery({
-    queryKey: ["diagnosticReport", latestReport?.id],
+    queryKey: ["diagnosticReport", activeReport?.id],
     queryFn: query(diagnosticReportApi.retrieveDiagnosticReport, {
       pathParams: {
         patient_external_id: patientId,
-        external_id: latestReport?.id || "",
+        external_id: activeReport?.id || "",
       },
     }),
-    enabled: !!latestReport?.id,
+    enabled: !!activeReport?.id,
   });
 
   // Query to fetch files for the diagnostic report
@@ -197,23 +210,20 @@ export function DiagnosticReportForm({
       },
     });
 
-  // Effect to handle diagnostic reports changes
+  // Effect to set activeReportId when reports change
   useEffect(() => {
-    const latestReport = diagnosticReports[0];
-    if (latestReport) {
-      // If we have a new report, update the UI accordingly
-      setSelectedReportCode(latestReport.code || null);
+    if (diagnosticReports.length > 0 && !activeReportId) {
+      setActiveReportId(diagnosticReports[0].id);
+    }
+  }, [diagnosticReports, activeReportId]);
+
+  // Effect to update selectedReportCode based on active report
+  useEffect(() => {
+    if (activeReport) {
+      setSelectedReportCode(activeReport.code || null);
       setIsExpanded(true);
     }
-  }, [diagnosticReports]);
-
-  // Effect to handle fullReport changes
-  useEffect(() => {
-    if (fullReport) {
-      // When we get the full report details, ensure UI is in correct state
-      setSelectedReportCode(fullReport.code || null);
-    }
-  }, [fullReport]);
+  }, [activeReport]);
 
   // Upserting observations for a diagnostic report
   const { mutate: upsertObservations, isPending: isUpsertingObservations } =
@@ -221,7 +231,7 @@ export function DiagnosticReportForm({
       mutationFn: mutate(observationApi.upsertObservations, {
         pathParams: {
           patient_external_id: patientId,
-          external_id: latestReport?.id || "",
+          external_id: activeReport?.id || "",
         },
       }),
       onSuccess: () => {
@@ -230,7 +240,7 @@ export function DiagnosticReportForm({
           queryKey: ["serviceRequest", serviceRequestId],
         });
         queryClient.invalidateQueries({
-          queryKey: ["diagnosticReport", latestReport?.id],
+          queryKey: ["diagnosticReport", activeReport?.id],
         });
       },
       onError: (err: any) => {
@@ -245,13 +255,13 @@ export function DiagnosticReportForm({
       mutationFn: mutate(diagnosticReportApi.updateDiagnosticReport, {
         pathParams: {
           patient_external_id: patientId,
-          external_id: latestReport?.id || "",
+          external_id: activeReport?.id || "",
         },
       }),
       onSuccess: () => {
         toast.success(t("conclusion_updated_successfully"));
         queryClient.invalidateQueries({
-          queryKey: ["diagnosticReport", latestReport?.id],
+          queryKey: ["diagnosticReport", activeReport?.id],
         });
         setIsExpanded(false);
       },
@@ -268,7 +278,7 @@ export function DiagnosticReportForm({
     allowNameFallback: false,
     onUpload: () => {
       queryClient.invalidateQueries({
-        queryKey: ["diagnosticReport", latestReport?.id],
+        queryKey: ["diagnosticReport", activeReport?.id],
       });
     },
     compress: false,
@@ -466,26 +476,28 @@ export function DiagnosticReportForm({
   }
 
   function handleCreateReport() {
-    // Only create a new report if no reports exist
-    if (!hasReport) {
-      if (!hasCollectedSpecimens) {
-        toast.error(t("specimen_collection_required"));
-        return;
-      }
-
-      const category: Code = {
-        code: "LAB",
-        display: "Laboratory",
-        system: "http://terminology.hl7.org/CodeSystem/v2-0074",
-      };
-
-      createDiagnosticReport({
-        status: DiagnosticReportStatus.preliminary,
-        category,
-        service_request: serviceRequestId,
-        code: selectedReportCode || undefined,
-      });
+    if (!hasCollectedSpecimens) {
+      toast.error(t("specimen_collection_required"));
+      return;
     }
+
+    if (!selectedReportCode) {
+      toast.error(t("please_select_report_type"));
+      return;
+    }
+
+    const category: Code = {
+      code: "LAB",
+      display: "Laboratory",
+      system: "http://terminology.hl7.org/CodeSystem/v2-0074",
+    };
+
+    createDiagnosticReport({
+      status: DiagnosticReportStatus.preliminary,
+      category,
+      service_request: serviceRequestId,
+      code: selectedReportCode,
+    });
   }
 
   function handleSubmit() {
@@ -897,6 +909,23 @@ export function DiagnosticReportForm({
             />
             {hasReport && fullReport ? (
               <div className="space-y-6">
+                {/* Report selector when multiple reports exist */}
+                {diagnosticReports.length > 1 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {diagnosticReports.map((report) => (
+                      <Button
+                        key={report.id}
+                        variant={
+                          activeReportId === report.id ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => setActiveReportId(report.id)}
+                      >
+                        {report.code?.display || t("diagnostic_report")}
+                      </Button>
+                    ))}
+                  </div>
+                )}
                 {fullReport.status !== DiagnosticReportStatus.final && (
                   <PLUGIN_Component
                     __name="DiagnosticReportOverride"
@@ -1228,6 +1257,65 @@ export function DiagnosticReportForm({
                     </div>
                   )}
                 </div>
+
+                {/* Create another report button when more codes are available */}
+                {canCreateMoreReports &&
+                  fullReport.status === DiagnosticReportStatus.preliminary && (
+                    <div className="space-y-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="text-gray-700 flex justify-center items-center">
+                        <p className="text-sm text-center">
+                          {t("create_another_diagnostic_report")}
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
+                        {availableCodes.length > 0 && (
+                          <div className="flex-1 min-w-0">
+                            <Select
+                              value={selectedReportCode?.code}
+                              onValueChange={(value) => {
+                                const code = availableCodes.find(
+                                  (c) => c.code === value,
+                                );
+                                setSelectedReportCode(code || null);
+                              }}
+                              disabled={disableEdit}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue
+                                  placeholder={t(
+                                    "select_diagnostic_report_type",
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableCodes.map((code) => (
+                                  <SelectItem key={code.code} value={code.code}>
+                                    <div className="flex flex-col">
+                                      <span className="truncate">
+                                        {code.display} ({code.code})
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                        <Button
+                          onClick={handleCreateReport}
+                          disabled={
+                            disableEdit ||
+                            isCreatingReport ||
+                            !selectedReportCode
+                          }
+                          className="w-full sm:w-auto sm:shrink-0"
+                        >
+                          <PlusCircle className="size-4 mr-2" />
+                          {t("create_another_report")}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
               </div>
             ) : (
               <div className="space-y-4 bg-gray-50 rounded-lg p-4">

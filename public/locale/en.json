@@ -6684,5 +6684,8 @@
   "your_request_order_list": "Your Request Order List",
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
-  "℞": "℞"
+  "℞": "℞",
+  "create_another_report": "Create Another Report",
+  "please_select_report_type": "Please select a report type",
+  "create_another_diagnostic_report": "Create another diagnostic report for a different test type"
 }
