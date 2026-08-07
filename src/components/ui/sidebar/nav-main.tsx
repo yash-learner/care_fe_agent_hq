@@ -51,6 +51,7 @@ export interface NavigationLink {
   url: string;
   icon?: ReactNode;
   visibility?: boolean;
+  target?: string;
   children?: NavigationLink[];
 }
 
@@ -61,6 +62,7 @@ function NavLink({
   exactActiveClass,
   className,
   onClick,
+  target,
   children,
 }: {
   href: string;
@@ -69,6 +71,7 @@ function NavLink({
   exactActiveClass?: string;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
+  target?: string;
   children: ReactNode;
 }) {
   const resolvedExact = exactActiveClass ?? activeClass;
@@ -80,6 +83,7 @@ function NavLink({
       className={className}
       activeClass={activeClass}
       exactActiveClass={resolvedExact}
+      target={target}
       onClick={(e) => {
         if (isSelected) {
           e.preventDefault();
@@ -147,6 +151,7 @@ export function NavMain({ links }: { links: NavigationLink[] }) {
                       href={link.url}
                       isSelected={isSelected(link.url)}
                       activeClass="bg-white text-green-700 shadow-sm"
+                      target={link.target}
                     >
                       {link.icon ? (
                         link.icon
@@ -240,6 +245,7 @@ function CollapsibleNavItem({
                             "bg-white text-green-700 shadow",
                         )}
                         exactActiveClass="bg-white text-green-700 shadow"
+                        target={subItem.target}
                       >
                         {subItem.name}
                       </NavLink>
@@ -271,6 +277,7 @@ function NavItem({
       className="w-full rounded-md px-2 py-1.5 text-sm outline-none transition-colors hover:bg-gray-100 focus:bg-gray-100"
       activeClass="bg-gray-100 text-green-700"
       onClick={() => setOpen(false)}
+      target={item.target}
     >
       {item.name}
     </NavLink>

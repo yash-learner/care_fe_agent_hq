@@ -17,6 +17,19 @@ interface ILogo {
   dark: string;
 }
 
+/**
+ * Custom navigation link configuration
+ * Matches NavigationLink interface from nav-main.tsx
+ */
+export interface CustomNavLink {
+  name: string;
+  url: string;
+  icon?: { type: "care" | "lucide"; icon: string };
+  target?: string;
+  visibility?: boolean;
+  children?: CustomNavLink[];
+}
+
 const logo = (value?: string, fallback?: ILogo) => {
   if (!value) {
     return fallback;
@@ -79,8 +92,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -407,6 +419,53 @@ const careConfig = {
   maxFormDialogFavorites: env.REACT_MAX_FORM_DIALOG_FAVORITES
     ? parseInt(env.REACT_MAX_FORM_DIALOG_FAVORITES, 10)
     : 5,
+
+  /**
+   * Custom navigation links for facility sidebar
+   * Format: JSON array of link objects from REACT_NAV_LINKS
+   * Each link requires 'name' and 'url', optional 'icon', 'target', 'visibility', 'children'
+   */
+  customNavLinks: (() => {
+    const raw = env.REACT_NAV_LINKS;
+    if (!raw) return [];
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        console.error(
+          "REACT_NAV_LINKS must be a JSON array. App will continue without custom navigation links.",
+        );
+        return [];
+      }
+
+      // Validate required fields
+      const valid = parsed.every(
+        (link) =>
+          typeof link === "object" &&
+          link !== null &&
+          typeof link.name === "string" &&
+          link.name.trim() !== "" &&
+          typeof link.url === "string" &&
+          link.url.trim() !== "",
+      );
+
+      if (!valid) {
+        console.error(
+          "REACT_NAV_LINKS: Each link requires 'name' and 'url' fields (non-empty strings). App will continue without custom navigation links.",
+        );
+        return [];
+      }
+
+      return parsed as CustomNavLink[];
+    } catch (err) {
+      console.error(
+        "REACT_NAV_LINKS parse error:",
+        err instanceof Error ? err.message : err,
+        "App will continue without custom navigation links.",
+      );
+      return [];
+    }
+  })(),
 } as const;
 
 export default careConfig;

@@ -12,11 +12,56 @@ import { getPermissions } from "@/common/Permissions";
 import { usePermissions } from "@/context/PermissionContext";
 import useCurrentFacility from "@/pages/Facility/utils/useCurrentFacility";
 import { FacilityBareMinimum } from "@/types/facility/facility";
-import careConfig from "@careConfig";
-import { Logs } from "lucide-react";
+import careConfig, { CustomNavLink } from "@careConfig";
+import * as LucideIcons from "lucide-react";
+import { ReactNode } from "react";
 
 interface FacilityNavProps {
   selectedFacility: FacilityBareMinimum | null;
+}
+
+/**
+ * Resolve icon for custom navigation link
+ * Supports CareIcon and Lucide icon formats
+ */
+function resolveCustomLinkIcon(icon?: {
+  type: "care" | "lucide";
+  icon: string;
+}): ReactNode {
+  if (!icon) return undefined;
+
+  if (icon.type === "care") {
+    return <CareIcon icon={icon.icon as any} />;
+  }
+
+  if (icon.type === "lucide") {
+    const LucideIcon = LucideIcons[
+      icon.icon as keyof typeof LucideIcons
+    ] as any;
+    return LucideIcon ? <LucideIcon className="size-4" /> : undefined;
+  }
+
+  return undefined;
+}
+
+/**
+ * Transform custom nav link to NavigationLink format
+ */
+function transformCustomLink(link: CustomNavLink): NavigationLink {
+  return {
+    name: link.name,
+    url: link.url,
+    icon: resolveCustomLinkIcon(link.icon),
+    visibility: link.visibility ?? true,
+    target: link.target,
+    children: link.children?.map((child) => ({
+      name: child.name,
+      url: child.url,
+      icon: resolveCustomLinkIcon(child.icon),
+      visibility: child.visibility ?? true,
+      target: child.target,
+    })),
+  };
 }
 
 function generateFacilityLinks(
@@ -55,7 +100,7 @@ function generateFacilityLinks(
     {
       name: t("queues"),
       url: `${baseUrl}/queues`,
-      icon: <Logs />,
+      icon: <LucideIcons.Logs />,
       visibility: permissions.canViewAppointments,
     },
     {
@@ -201,12 +246,29 @@ function generateFacilityLinks(
     },
   ];
 
+  // Transform custom links to NavigationLink format
+  const customLinks = careConfig.customNavLinks.map((link) => {
+    const transformed = transformCustomLink(link);
+    // For custom links, preserve the URL as-is if it's absolute (starts with http/https)
+    // Otherwise prefix with baseUrl
+    const isAbsoluteUrl =
+      link.url.startsWith("http://") || link.url.startsWith("https://");
+    return {
+      ...transformed,
+      url: isAbsoluteUrl
+        ? link.url
+        : `${baseUrl}${link.url.startsWith("/") ? "" : "/"}${link.url}`,
+      target: link.target,
+    };
+  });
+
   return [
     ...links,
     ...pluginLinks.map((l) => ({
       ...l,
       url: `${baseUrl}/${l.url}`,
     })),
+    ...customLinks,
   ];
 }
 
