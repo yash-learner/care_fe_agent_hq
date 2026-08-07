@@ -136,7 +136,7 @@ export function FacilityNavUser({
                   }}
                 >
                   {item.icon}
-                  {t(item.name)}
+                  {item.external ? item.name : t(item.name)}
                 </DropdownMenuItem>
               ))}
               {envLinks.map((item) => (

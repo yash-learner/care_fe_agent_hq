@@ -351,6 +351,16 @@ const careConfig = {
         );
         return null;
       }
+      if (typeof link.name !== "string" || typeof link.url !== "string") {
+        console.warn("Invalid REACT_NABH_LINK: name and url must be strings");
+        return null;
+      }
+      if (link.external !== undefined && typeof link.external !== "boolean") {
+        console.warn(
+          "Invalid REACT_NABH_LINK: external must be boolean if provided",
+        );
+        return null;
+      }
       return link;
     } catch (error) {
       console.warn("Failed to parse REACT_NABH_LINK:", error);
