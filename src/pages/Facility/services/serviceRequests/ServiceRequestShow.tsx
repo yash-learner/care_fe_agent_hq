@@ -609,21 +609,18 @@ export default function ServiceRequestShow({
                 </DropdownMenu>
               </div>
             )}
-            {hasUnusedCodes &&
-              (!diagnosticReports.length ||
-                diagnosticReports[0]?.status !==
-                  DiagnosticReportStatus.final) && (
-                <DiagnosticReportForm
-                  patientId={request.encounter.patient.id}
-                  facilityId={facilityId}
-                  serviceRequestId={serviceRequestId}
-                  observationDefinitions={observationRequirements}
-                  diagnosticReports={diagnosticReports}
-                  activityDefinition={activityDefinition}
-                  specimens={request.specimens || []}
-                  disableEdit={disableEdit}
-                />
-              )}
+            {hasUnusedCodes && (
+              <DiagnosticReportForm
+                patientId={request.encounter.patient.id}
+                facilityId={facilityId}
+                serviceRequestId={serviceRequestId}
+                observationDefinitions={observationRequirements}
+                diagnosticReports={diagnosticReports}
+                activityDefinition={activityDefinition}
+                specimens={request.specimens || []}
+                disableEdit={disableEdit}
+              />
+            )}
           </div>
 
           {diagnosticReports.length > 0 && (
