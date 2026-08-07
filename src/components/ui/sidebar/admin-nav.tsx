@@ -6,8 +6,8 @@ import CareIcon from "@/CAREUI/icons/CareIcon";
 import { NavMain, NavigationLink } from "@/components/ui/sidebar/nav-main";
 
 import { useCareApps } from "@/hooks/useCareApps";
+import { processEnvNavLinks } from "@/Utils/navLinks";
 import careConfig from "@careConfig";
-import { ExternalLink } from "lucide-react";
 
 function generateAdminLinks(
   t: TFunction,
@@ -78,21 +78,7 @@ function generateAdminLinks(
   ];
 
   // Process environment-configured links
-  const processedEnvLinks: NavigationLink[] = envLinks.map((link) => {
-    const isExternalLink =
-      link.url.startsWith("http://") || link.url.startsWith("https://");
-
-    return {
-      ...link,
-      icon: link.icon || <ExternalLink className="size-4" />,
-      // External links open in new tab
-      ...(isExternalLink && {
-        url: link.url,
-        // Mark as external for nav-main to handle appropriately
-        external: true,
-      }),
-    };
-  });
+  const processedEnvLinks = processEnvNavLinks(envLinks);
 
   return [...links, ...processedEnvLinks, ...pluginNavItems];
 }
@@ -105,7 +91,7 @@ export function AdminNav() {
     !c.isLoading && c.adminNavItems ? c.adminNavItems : [],
   ) as NavigationLink[];
 
-  const envNavLinks = careConfig.navLinks as NavigationLink[];
+  const envNavLinks = careConfig.navLinks;
 
   return <NavMain links={generateAdminLinks(t, pluginNavItems, envNavLinks)} />;
 }

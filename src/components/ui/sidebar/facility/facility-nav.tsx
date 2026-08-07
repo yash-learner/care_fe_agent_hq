@@ -12,8 +12,9 @@ import { getPermissions } from "@/common/Permissions";
 import { usePermissions } from "@/context/PermissionContext";
 import useCurrentFacility from "@/pages/Facility/utils/useCurrentFacility";
 import { FacilityBareMinimum } from "@/types/facility/facility";
+import { processEnvNavLinks } from "@/Utils/navLinks";
 import careConfig from "@careConfig";
-import { ExternalLink, Logs } from "lucide-react";
+import { Logs } from "lucide-react";
 
 interface FacilityNavProps {
   selectedFacility: FacilityBareMinimum | null;
@@ -203,21 +204,7 @@ function generateFacilityLinks(
   ];
 
   // Process environment-configured links
-  const processedEnvLinks: NavigationLink[] = envLinks.map((link) => {
-    const isExternalLink =
-      link.url.startsWith("http://") || link.url.startsWith("https://");
-
-    return {
-      ...link,
-      icon: link.icon || <ExternalLink className="size-4" />,
-      // External links open in new tab
-      ...(isExternalLink && {
-        url: link.url,
-        // Mark as external for nav-main to handle appropriately
-        external: true,
-      }),
-    };
-  });
+  const processedEnvLinks = processEnvNavLinks(envLinks);
 
   return [
     ...links,
@@ -241,7 +228,7 @@ export function FacilityNav({ selectedFacility }: FacilityNavProps) {
     !c.isLoading && c.billingNavItems ? c.billingNavItems : [],
   ) as NavigationLink[];
 
-  const envNavLinks = careConfig.navLinks as NavigationLink[];
+  const envNavLinks = careConfig.navLinks;
 
   const { facility } = useCurrentFacility();
 

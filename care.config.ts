@@ -6,9 +6,11 @@ import {
   EncounterDischargeDisposition,
 } from "@/types/emr/encounter/encounter";
 
+import { NavigationLink } from "@/components/ui/sidebar/nav-main";
 import { NonEmptyArray } from "@/Utils/types";
 import Decimal from "decimal.js";
 import { CountryCode } from "libphonenumber-js";
+import { ReactNode } from "react";
 
 const env = import.meta.env;
 
@@ -16,6 +18,14 @@ interface ILogo {
   light: string;
   dark: string;
 }
+
+/**
+ * Type for environment-configured navigation links.
+ * Compatible with NavigationLink but only requires name, url, and optional icon.
+ */
+export type EnvNavLink = Pick<NavigationLink, "name" | "url"> & {
+  icon?: ReactNode;
+};
 
 const logo = (value?: string, fallback?: ILogo) => {
   if (!value) {
@@ -412,7 +422,7 @@ const careConfig = {
    * Format: JSON array with link objects containing name, url, and optional icon
    * Links are displayed after core nav items but before plugin items
    */
-  navLinks: (() => {
+  navLinks: ((): EnvNavLink[] => {
     if (!env.REACT_NAV_LINKS) return [];
 
     try {
