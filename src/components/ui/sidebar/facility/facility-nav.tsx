@@ -12,6 +12,7 @@ import { getPermissions } from "@/common/Permissions";
 import { usePermissions } from "@/context/PermissionContext";
 import useCurrentFacility from "@/pages/Facility/utils/useCurrentFacility";
 import { FacilityBareMinimum } from "@/types/facility/facility";
+import { processEnvNavLinks } from "@/Utils/navLinks";
 import careConfig from "@careConfig";
 import { Logs } from "lucide-react";
 
@@ -33,6 +34,7 @@ function generateFacilityLinks(
   },
   pluginLinks: NavigationLink[],
   pluginBillingLinks: NavigationLink[],
+  envLinks: NavigationLink[],
 ) {
   if (!selectedFacility) return [];
 
@@ -201,8 +203,12 @@ function generateFacilityLinks(
     },
   ];
 
+  // Process environment-configured links
+  const processedEnvLinks = processEnvNavLinks(envLinks);
+
   return [
     ...links,
+    ...processedEnvLinks,
     ...pluginLinks.map((l) => ({
       ...l,
       url: `${baseUrl}/${l.url}`,
@@ -221,6 +227,8 @@ export function FacilityNav({ selectedFacility }: FacilityNavProps) {
   const pluginBillingNavItems = careApps.flatMap((c) =>
     !c.isLoading && c.billingNavItems ? c.billingNavItems : [],
   ) as NavigationLink[];
+
+  const envNavLinks = careConfig.navLinks;
 
   const { facility } = useCurrentFacility();
 
@@ -250,6 +258,7 @@ export function FacilityNav({ selectedFacility }: FacilityNavProps) {
         permissions,
         pluginNavItems,
         pluginBillingNavItems,
+        envNavLinks,
       )}
     />
   );

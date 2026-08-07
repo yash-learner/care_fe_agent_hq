@@ -6,10 +6,13 @@ import CareIcon from "@/CAREUI/icons/CareIcon";
 import { NavMain, NavigationLink } from "@/components/ui/sidebar/nav-main";
 
 import { useCareApps } from "@/hooks/useCareApps";
+import { processEnvNavLinks } from "@/Utils/navLinks";
+import careConfig from "@careConfig";
 
 function generateAdminLinks(
   t: TFunction,
   pluginNavItems: NavigationLink[],
+  envLinks: NavigationLink[],
 ): NavigationLink[] {
   const baseUrl = "/admin";
   const links: NavigationLink[] = [
@@ -72,10 +75,12 @@ function generateAdminLinks(
       url: `${baseUrl}/apps`,
       icon: <CareIcon icon="l-apps" />,
     },
-    ...pluginNavItems,
   ];
 
-  return links;
+  // Process environment-configured links
+  const processedEnvLinks = processEnvNavLinks(envLinks);
+
+  return [...links, ...processedEnvLinks, ...pluginNavItems];
 }
 
 export function AdminNav() {
@@ -86,5 +91,7 @@ export function AdminNav() {
     !c.isLoading && c.adminNavItems ? c.adminNavItems : [],
   ) as NavigationLink[];
 
-  return <NavMain links={generateAdminLinks(t, pluginNavItems)} />;
+  const envNavLinks = careConfig.navLinks;
+
+  return <NavMain links={generateAdminLinks(t, pluginNavItems, envNavLinks)} />;
 }

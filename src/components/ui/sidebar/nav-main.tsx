@@ -52,6 +52,7 @@ export interface NavigationLink {
   icon?: ReactNode;
   visibility?: boolean;
   children?: NavigationLink[];
+  external?: boolean; // Marks link as external (opens in new tab)
 }
 
 function NavLink({
@@ -62,6 +63,7 @@ function NavLink({
   className,
   onClick,
   children,
+  external,
 }: {
   href: string;
   isSelected: boolean;
@@ -70,9 +72,25 @@ function NavLink({
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   children: ReactNode;
+  external?: boolean;
 }) {
   const resolvedExact = exactActiveClass ?? activeClass;
   const { toggleSidebar, isMobile } = useSidebar();
+
+  // External links should use regular anchor tags
+  if (external) {
+    return (
+      <a
+        href={href}
+        className={className}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+      >
+        {children}
+      </a>
+    );
+  }
 
   return (
     <ActiveLink
@@ -147,6 +165,7 @@ export function NavMain({ links }: { links: NavigationLink[] }) {
                       href={link.url}
                       isSelected={isSelected(link.url)}
                       activeClass="bg-white text-green-700 shadow-sm"
+                      external={link.external}
                     >
                       {link.icon ? (
                         link.icon
