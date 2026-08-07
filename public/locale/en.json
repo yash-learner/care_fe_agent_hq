@@ -6684,5 +6684,8 @@
   "your_request_order_list": "Your Request Order List",
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
-  "℞": "℞"
+  "℞": "℞",
+  "create_additional_diagnostic_report": "Create additional diagnostic report",
+  "please_select_diagnostic_report_type": "Please select a diagnostic report type",
+  "diagnostic_report_code_already_used": "This diagnostic report code has already been used"
 }
