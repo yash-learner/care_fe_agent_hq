@@ -1259,63 +1259,58 @@ export function DiagnosticReportForm({
                 </div>
 
                 {/* Create another report button when more codes are available */}
-                {canCreateMoreReports &&
-                  fullReport.status === DiagnosticReportStatus.preliminary && (
-                    <div className="space-y-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="text-gray-700 flex justify-center items-center">
-                        <p className="text-sm text-center">
-                          {t("create_another_diagnostic_report")}
-                        </p>
-                      </div>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
-                        {availableCodes.length > 0 && (
-                          <div className="flex-1 min-w-0">
-                            <Select
-                              value={selectedReportCode?.code}
-                              onValueChange={(value) => {
-                                const code = availableCodes.find(
-                                  (c) => c.code === value,
-                                );
-                                setSelectedReportCode(code || null);
-                              }}
-                              disabled={disableEdit}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue
-                                  placeholder={t(
-                                    "select_diagnostic_report_type",
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableCodes.map((code) => (
-                                  <SelectItem key={code.code} value={code.code}>
-                                    <div className="flex flex-col">
-                                      <span className="truncate">
-                                        {code.display} ({code.code})
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                        <Button
-                          onClick={handleCreateReport}
-                          disabled={
-                            disableEdit ||
-                            isCreatingReport ||
-                            !selectedReportCode
-                          }
-                          className="w-full sm:w-auto sm:shrink-0"
-                        >
-                          <PlusCircle className="size-4 mr-2" />
-                          {t("create_another_report")}
-                        </Button>
-                      </div>
+                {canCreateMoreReports && (
+                  <div className="space-y-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="text-gray-700 flex justify-center items-center">
+                      <p className="text-sm text-center">
+                        {t("create_another_diagnostic_report")}
+                      </p>
                     </div>
-                  )}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
+                      {availableCodes.length > 0 && (
+                        <div className="flex-1 min-w-0">
+                          <Select
+                            value={selectedReportCode?.code}
+                            onValueChange={(value) => {
+                              const code = availableCodes.find(
+                                (c) => c.code === value,
+                              );
+                              setSelectedReportCode(code || null);
+                            }}
+                            disabled={disableEdit}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder={t("select_diagnostic_report_type")}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableCodes.map((code) => (
+                                <SelectItem key={code.code} value={code.code}>
+                                  <div className="flex flex-col">
+                                    <span className="truncate">
+                                      {code.display} ({code.code})
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <Button
+                        onClick={handleCreateReport}
+                        disabled={
+                          disableEdit || isCreatingReport || !selectedReportCode
+                        }
+                        className="w-full sm:w-auto sm:shrink-0"
+                      >
+                        <PlusCircle className="size-4 mr-2" />
+                        {t("create_another_report")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4 bg-gray-50 rounded-lg p-4">
