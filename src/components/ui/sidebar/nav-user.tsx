@@ -29,6 +29,7 @@ import { usePatientSignOut } from "@/hooks/usePatientSignOut";
 import { usePatientContext } from "@/hooks/usePatientUser";
 
 import { formatName } from "@/Utils/utils";
+import careConfig from "@careConfig";
 
 export function FacilityNavUser({
   selectedFacilityId,
@@ -44,6 +45,12 @@ export function FacilityNavUser({
   const pluginNavItems = careApps.flatMap((c) =>
     !c.isLoading && c.userNavItems ? c.userNavItems : [],
   ) as NavigationLink[];
+
+  // Combine env-configured links (general + NABH)
+  const envLinks = [
+    ...careConfig.navLinks,
+    ...(careConfig.nabhLink ? [careConfig.nabhLink] : []),
+  ] as NavigationLink[];
 
   return (
     <SidebarMenu>
@@ -119,13 +126,32 @@ export function FacilityNavUser({
                 <DropdownMenuItem
                   key={item.name}
                   onClick={() => {
-                    navigate(
-                      `/facility/${selectedFacilityId}/users/${user.username}/${item.url}`,
-                    );
+                    if (item.external) {
+                      window.open(item.url, "_blank", "noopener,noreferrer");
+                    } else {
+                      navigate(
+                        `/facility/${selectedFacilityId}/users/${user.username}/${item.url}`,
+                      );
+                    }
                   }}
                 >
                   {item.icon}
-                  {t(item.name)}
+                  {item.external ? item.name : t(item.name)}
+                </DropdownMenuItem>
+              ))}
+              {envLinks.map((item) => (
+                <DropdownMenuItem
+                  key={item.name}
+                  onClick={() => {
+                    if (item.external) {
+                      window.open(item.url, "_blank", "noopener,noreferrer");
+                    } else {
+                      navigate(item.url);
+                    }
+                  }}
+                >
+                  {item.icon}
+                  {item.name}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
