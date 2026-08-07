@@ -79,8 +79,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -305,6 +304,15 @@ const careConfig = {
   customShortcuts: env.REACT_CUSTOM_SHORTCUTS
     ? JSON.parse(env.REACT_CUSTOM_SHORTCUTS)
     : [],
+
+  /**
+   * Custom navbar footer links configuration from environment variables
+   * Format: JSON string with array of link objects
+   * Each link should have: name, url
+   * Example: [{"name":"Documentation","url":"https://docs.example.com"}]
+   */
+  navbarLinks: env.REACT_NAVBAR_LINKS ? JSON.parse(env.REACT_NAVBAR_LINKS) : [],
+
   /**
    * System identifier for patient phone number configuration
    */
