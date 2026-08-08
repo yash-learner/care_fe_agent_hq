@@ -37,6 +37,18 @@ export function isNonUnitDose(
   return round(dose_quantity.value) !== round(1);
 }
 
+/**
+ * Format dosage for print/PDF with bold text and asterisk indicator for non-unit doses.
+ * Returns an object with text and whether it should be emphasized.
+ */
+export function formatDosageForPrint(
+  instruction?: MedicationRequestDosageInstruction,
+): { text: string; emphasize: boolean } {
+  const text = formatDosage(instruction);
+  const emphasize = isNonUnitDose(instruction);
+  return { text, emphasize };
+}
+
 // Helper function to format dosage instructions in Rx style
 export function formatSig(instruction?: MedicationRequestDosageInstruction) {
   if (!instruction) return "";
