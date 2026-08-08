@@ -201,8 +201,28 @@ function generateFacilityLinks(
     },
   ];
 
+  // Add environment-configured navigation links
+  const envLinks: NavigationLink[] = [];
+  if (careConfig.navLinks.docs) {
+    envLinks.push({
+      name: t("documentation"),
+      url: careConfig.navLinks.docs,
+      icon: <CareIcon icon="l-book-open" />,
+      external: true,
+    });
+  }
+  if (careConfig.navLinks.nabh) {
+    envLinks.push({
+      name: t("nabh_certification"),
+      url: careConfig.navLinks.nabh,
+      icon: <CareIcon icon="l-award" />,
+      external: true,
+    });
+  }
+
   return [
     ...links,
+    ...envLinks,
     ...pluginLinks.map((l) => ({
       ...l,
       url: `${baseUrl}/${l.url}`,

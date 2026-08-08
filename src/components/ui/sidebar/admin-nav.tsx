@@ -7,6 +7,8 @@ import { NavMain, NavigationLink } from "@/components/ui/sidebar/nav-main";
 
 import { useCareApps } from "@/hooks/useCareApps";
 
+import careConfig from "@careConfig";
+
 function generateAdminLinks(
   t: TFunction,
   pluginNavItems: NavigationLink[],
@@ -72,10 +74,27 @@ function generateAdminLinks(
       url: `${baseUrl}/apps`,
       icon: <CareIcon icon="l-apps" />,
     },
-    ...pluginNavItems,
   ];
 
-  return links;
+  // Add environment-configured navigation links
+  if (careConfig.navLinks.docs) {
+    links.push({
+      name: t("documentation"),
+      url: careConfig.navLinks.docs,
+      icon: <CareIcon icon="l-book-open" />,
+      external: true,
+    });
+  }
+  if (careConfig.navLinks.nabh) {
+    links.push({
+      name: t("nabh_certification"),
+      url: careConfig.navLinks.nabh,
+      icon: <CareIcon icon="l-award" />,
+      external: true,
+    });
+  }
+
+  return [...links, ...pluginNavItems];
 }
 
 export function AdminNav() {

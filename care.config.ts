@@ -79,8 +79,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -305,6 +304,14 @@ const careConfig = {
   customShortcuts: env.REACT_CUSTOM_SHORTCUTS
     ? JSON.parse(env.REACT_CUSTOM_SHORTCUTS)
     : [],
+
+  /**
+   * Navigation links configuration
+   */
+  navLinks: {
+    docs: env.REACT_NAV_DOCS_LINK,
+    nabh: env.REACT_NAV_NABH_LINK,
+  },
   /**
    * System identifier for patient phone number configuration
    */
