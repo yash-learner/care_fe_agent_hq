@@ -19,7 +19,10 @@ import {
 
 import Loading from "@/components/Common/Loading";
 import PrintFooter from "@/components/Common/PrintFooter";
-import { formatDosage, formatFrequency } from "@/components/Medicine/utils";
+import {
+  formatDosageForPrint,
+  formatFrequency,
+} from "@/components/Medicine/utils";
 
 import useCurrentFacilitySilently from "@/pages/Facility/utils/useCurrentFacility";
 import encounterApi from "@/types/emr/encounter/encounterApi";
@@ -537,7 +540,10 @@ const DrugChartTable = ({
                     {group.productName}
                   </div>
                   {instructions.map((di, idx) => {
-                    const doseText = formatDosage(di);
+                    const dosageForPrint = formatDosageForPrint(di);
+                    const doseText = dosageForPrint.emphasize
+                      ? `${dosageForPrint.text} *`
+                      : dosageForPrint.text;
                     const routeText = di.route?.display;
                     const frequencyText = isPRN
                       ? t("as_needed")
@@ -553,6 +559,7 @@ const DrugChartTable = ({
                           idx === 0 && "mt-0.5",
                           idx > 0 &&
                             "mt-0.5 pt-0.5 border-t border-dashed border-gray-300",
+                          dosageForPrint.emphasize && "font-extrabold",
                         )}
                       >
                         {summary}

@@ -11,7 +11,7 @@ import Loading from "@/components/Common/Loading";
 import PrintFooter from "@/components/Common/PrintFooter";
 import PrintTable from "@/components/Common/PrintTable";
 import {
-  formatDosage,
+  formatDosageForPrint,
   formatDuration,
   formatFrequencyWithInstructions,
   formatSig,
@@ -40,6 +40,30 @@ const PrescriptionContent = ({
   const medications = prescription.medications;
   const { t } = useTranslation();
 
+  const medicationRows = medications.flatMap((medication) => {
+    const instructions = medication.dosage_instruction;
+    const isMulti = instructions.length > 1;
+    return instructions.map((di, idx) => {
+      const dosageForPrint = formatDosageForPrint(di);
+      const dosageText = dosageForPrint.text || "-";
+      const dosageDisplay = dosageForPrint.emphasize
+        ? `${dosageText} *`
+        : dosageText;
+      return {
+        _groupedRow:
+          isMulti && idx < instructions.length - 1 ? "true" : undefined,
+        _dosageEmphasize: dosageForPrint.emphasize ? "true" : undefined,
+        medicine: idx === 0 ? displayMedicationName(medication) : "",
+        dosage: dosageDisplay,
+        frequency: formatFrequencyWithInstructions(di) || "-",
+        duration: formatDuration(di) || "-",
+        instructions: [formatSig(di), idx === 0 ? medication.note : ""]
+          .filter(Boolean)
+          .join("\n"),
+      };
+    });
+  });
+
   return (
     <div>
       {/* Prescription Symbol */}
@@ -62,22 +86,20 @@ const PrescriptionContent = ({
               { key: "duration" },
               { key: "instructions" },
             ]}
-            rows={medications.flatMap((medication) => {
-              const instructions = medication.dosage_instruction;
-              const isMulti = instructions.length > 1;
-              return instructions.map((di, idx) => ({
-                _groupedRow:
-                  isMulti && idx < instructions.length - 1 ? "true" : undefined,
-                medicine: idx === 0 ? displayMedicationName(medication) : "",
-                dosage: formatDosage(di) || "-",
-                frequency: formatFrequencyWithInstructions(di) || "-",
-                duration: formatDuration(di) || "-",
-                instructions: [formatSig(di), idx === 0 ? medication.note : ""]
-                  .filter(Boolean)
-                  .join("\n"),
-              }));
-            })}
+            rows={medicationRows}
             className="text-sm break-words font-semibold whitespace-break-spaces text-gray-950"
+            renderCell={(key, value, rowIndex) => {
+              if (key === "dosage") {
+                const emphasize =
+                  medicationRows[rowIndex]?._dosageEmphasize === "true";
+                return emphasize ? (
+                  <span className="font-extrabold">{value}</span>
+                ) : (
+                  value
+                );
+              }
+              return value;
+            }}
             cellConfig={{
               medicine: { className: "text-left" },
               frequency: { className: "text-left" },
