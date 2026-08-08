@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import * as React from "react";
 
+import { RESULTS_PER_PAGE_LIMIT } from "@/common/constants";
 import { CardListSkeleton } from "@/components/Common/SkeletonLoading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export default function DispenseOrderListSelector({
         pathParams: { facilityId: facilityId ?? "" },
         queryParams: {
           patient: patientId,
-          limit: 14,
+          limit: RESULTS_PER_PAGE_LIMIT,
           offset: String(pageParam),
         },
       })({ signal });
@@ -59,7 +60,7 @@ export default function DispenseOrderListSelector({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const currentOffset = allPages.length * 14;
+      const currentOffset = allPages.length * RESULTS_PER_PAGE_LIMIT;
       return currentOffset < lastPage.count ? currentOffset : null;
     },
     enabled: !!patientId && !!facilityId,
