@@ -12,10 +12,15 @@ import { Input } from "@/components/ui/input";
 import { MonetaryDisplay } from "@/components/ui/monetary-display";
 import {
   createdByFilter,
+  dateFilter,
   invoiceStatusFilter,
 } from "@/components/ui/multi-filter/filterConfigs";
 import MultiFilter from "@/components/ui/multi-filter/MultiFilter";
 import useMultiFilterState from "@/components/ui/multi-filter/utils/useMultiFilterState";
+import {
+  FilterDateRange,
+  longDateRangeOptions,
+} from "@/components/ui/multi-filter/utils/Utils";
 
 import { TableSkeleton } from "@/components/Common/SkeletonLoading";
 import {
@@ -39,7 +44,7 @@ import {
 import invoiceApi from "@/types/billing/invoice/invoiceApi";
 import { UserReadMinimal } from "@/types/user/user";
 import query from "@/Utils/request/query";
-import { formatDateTime } from "@/Utils/utils";
+import { dateTimeQueryString, formatDateTime } from "@/Utils/utils";
 
 export default function InvoicesData({
   facilityId,
@@ -58,9 +63,12 @@ export default function InvoicesData({
     disableCache: true,
   });
 
+  const { created_date_after, created_date_before } = qParams;
+
   const filters = [
     invoiceStatusFilter("status"),
     createdByFilter("created_by"),
+    dateFilter("created_date", t("period"), longDateRangeOptions, false),
   ];
 
   const onFilterUpdate = (filterQuery: Record<string, unknown>) => {
@@ -76,6 +84,21 @@ export default function InvoicesData({
         created_by: user?.id || undefined,
       };
     }
+
+    if (filterQuery.created_date !== undefined) {
+      const dateRange = filterQuery.created_date as FilterDateRange;
+      query = {
+        ...query,
+        created_date: undefined,
+        created_date_after: dateRange?.from
+          ? dateTimeQueryString(dateRange.from as Date)
+          : undefined,
+        created_date_before: dateRange?.to
+          ? dateTimeQueryString(dateRange.to as Date, true)
+          : undefined,
+      };
+    }
+
     updateQuery(query);
   };
 
@@ -89,6 +112,17 @@ export default function InvoicesData({
     ...qParams,
     status: qParams.status ? [qParams.status] : undefined,
     created_by: [],
+    created_date:
+      created_date_after || created_date_before
+        ? {
+            from: created_date_after
+              ? new Date(created_date_after as string)
+              : undefined,
+            to: created_date_before
+              ? new Date(created_date_before as string)
+              : undefined,
+          }
+        : undefined,
   });
 
   const { data: response, isLoading } = useQuery({
@@ -103,6 +137,8 @@ export default function InvoicesData({
         status: qParams.status,
         patient: qParams.patient,
         created_by: qParams.created_by,
+        created_date_after: qParams.created_date_after,
+        created_date_before: qParams.created_date_before,
       },
     }),
   });
