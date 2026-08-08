@@ -30,6 +30,9 @@ import { usePatientContext } from "@/hooks/usePatientUser";
 
 import { formatName } from "@/Utils/utils";
 
+import CareIcon from "@/CAREUI/icons/CareIcon";
+import careConfig from "@careConfig";
+
 export function FacilityNavUser({
   selectedFacilityId,
 }: {
@@ -128,6 +131,34 @@ export function FacilityNavUser({
                   {t(item.name)}
                 </DropdownMenuItem>
               ))}
+              {careConfig.navLinks.docs && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.open(
+                      careConfig.navLinks.docs,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                  }}
+                >
+                  <CareIcon icon="l-book-open" />
+                  {t("documentation")}
+                </DropdownMenuItem>
+              )}
+              {careConfig.navLinks.nabh && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.open(
+                      careConfig.navLinks.nabh,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                  }}
+                >
+                  <CareIcon icon="l-award" />
+                  {t("nabh_certification")}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>
