@@ -9,7 +9,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -140,15 +140,18 @@ export function DiagnosticReportForm({
   const hasReport = !!latestReport;
 
   // Calculate available codes (codes not yet used in diagnostic reports)
-  const usedCodes = new Set(
-    diagnosticReports
-      .map((report) => report.code?.code)
-      .filter((code): code is string => !!code),
-  );
-  const availableCodes =
-    activityDefinition?.diagnostic_report_codes?.filter(
-      (code) => !usedCodes.has(code.code),
-    ) || [];
+  const availableCodes = useMemo(() => {
+    const usedCodes = new Set(
+      diagnosticReports
+        .map((report) => report.code?.code)
+        .filter((code): code is string => !!code),
+    );
+    return (
+      activityDefinition?.diagnostic_report_codes?.filter(
+        (code) => !usedCodes.has(code.code),
+      ) || []
+    );
+  }, [diagnosticReports, activityDefinition?.diagnostic_report_codes]);
 
   // Check if all required specimens are collected
   const hasCollectedSpecimens =
