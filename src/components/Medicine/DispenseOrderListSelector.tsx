@@ -188,6 +188,7 @@ function DispenseOrderList({
         return (
           <Card
             key={dispenseOrder.id}
+            data-slot="dispense-order-card"
             className={cn(
               "rounded-md relative cursor-pointer transition-colors w-full",
               isSelected
