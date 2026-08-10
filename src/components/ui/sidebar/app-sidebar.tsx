@@ -207,9 +207,6 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        {allCustomLinks.length > 0 && (
-          <CustomFooterLinks links={allCustomLinks} sidebarFor={sidebarFor} />
-        )}
         {patientSidebar ? (
           <PatientNavUser />
         ) : (
@@ -218,6 +215,9 @@ export function AppSidebar({
               facilitySidebar ? selectedFacility?.id : undefined
             }
           />
+        )}
+        {allCustomLinks.length > 0 && (
+          <CustomFooterLinks links={allCustomLinks} sidebarFor={sidebarFor} />
         )}
       </SidebarFooter>
 
