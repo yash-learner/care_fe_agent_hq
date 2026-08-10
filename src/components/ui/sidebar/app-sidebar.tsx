@@ -15,6 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AdminNav } from "@/components/ui/sidebar/admin-nav";
+import { CustomFooterLinks } from "@/components/ui/sidebar/custom-footer-links";
 import { FacilityNav } from "@/components/ui/sidebar/facility/facility-nav";
 import { FacilitySwitcher } from "@/components/ui/sidebar/facility/facility-switcher";
 import { LocationNav } from "@/components/ui/sidebar/facility/location/location-nav";
@@ -32,12 +33,14 @@ import {
   ResponsibilitySwitcher,
 } from "@/components/ui/sidebar/responsibility-switcher";
 
+import { useCareApps } from "@/hooks/useCareApps";
 import { useRouteParams } from "@/hooks/useRouteParams";
 import { ServiceSwitcher } from "./facility/service/service-switcher";
 
 import PinPageDialog from "@/components/Common/PinPageDialog";
 import { FacilityBareMinimum } from "@/types/facility/facility";
 import { CurrentUserRead } from "@/types/user/user";
+import careConfig from "@careConfig";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: CurrentUserRead;
@@ -108,6 +111,20 @@ export function AppSidebar({
 
   const hasFacilities = user?.facilities && user.facilities.length > 0;
   const hasOrganizations = user?.organizations && user.organizations.length > 0;
+
+  const careApps = useCareApps();
+  const pluginCustomFooterLinks = React.useMemo(
+    () =>
+      careApps.flatMap((app) =>
+        !app.isLoading && app.customFooterLinks ? app.customFooterLinks : [],
+      ),
+    [careApps],
+  );
+
+  const allCustomLinks = React.useMemo(
+    () => [...careConfig.customLinks, ...pluginCustomFooterLinks],
+    [pluginCustomFooterLinks],
+  );
 
   useLocationChange(() => {
     if (isMobile) {
@@ -190,6 +207,9 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
+        {allCustomLinks.length > 0 && (
+          <CustomFooterLinks links={allCustomLinks} sidebarFor={sidebarFor} />
+        )}
         {patientSidebar ? (
           <PatientNavUser />
         ) : (
