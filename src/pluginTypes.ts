@@ -3,6 +3,7 @@ import { NavigationLink } from "@/components/ui/sidebar/nav-main";
 import type { OverrideCondition } from "@/lib/override";
 import { PluginEncounterTabProps } from "@/pages/Encounters/EncounterShow";
 import { InvoiceRead } from "@/types/billing/invoice/invoice";
+import { CustomLink } from "@/types/customLink";
 import { DeviceDetail } from "@/types/device/device";
 import { EncounterRead } from "@/types/emr/encounter/encounter";
 import {
@@ -207,6 +208,7 @@ export type PluginManifest = {
   billingNavItems?: NavigationLink[];
   userNavItems?: NavigationLink[];
   adminNavItems?: NavigationLink[];
+  customFooterLinks?: CustomLink[];
   organizationTabs?: PluginOrganizationTab[];
   components?: PluginComponentMap;
   encounterTabs?: Record<

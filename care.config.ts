@@ -6,6 +6,7 @@ import {
   EncounterDischargeDisposition,
 } from "@/types/emr/encounter/encounter";
 
+import { CustomLink } from "@/types/customLink";
 import { NonEmptyArray } from "@/Utils/types";
 import Decimal from "decimal.js";
 import { CountryCode } from "libphonenumber-js";
@@ -79,8 +80,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -407,6 +407,15 @@ const careConfig = {
   maxFormDialogFavorites: env.REACT_MAX_FORM_DIALOG_FAVORITES
     ? parseInt(env.REACT_MAX_FORM_DIALOG_FAVORITES, 10)
     : 5,
+
+  /**
+   * Custom links to display in sidebar footer
+   * Format: JSON array of { name, url, isExternal, openInNewTab, showIn? }
+   * Example: [{"name":"Support","url":"https://support.example.com","isExternal":true,"openInNewTab":true}]
+   */
+  customLinks: (env.REACT_CUSTOM_LINKS
+    ? JSON.parse(env.REACT_CUSTOM_LINKS)
+    : []) as CustomLink[],
 } as const;
 
 export default careConfig;
