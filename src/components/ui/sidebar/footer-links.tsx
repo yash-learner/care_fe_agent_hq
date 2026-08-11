@@ -52,15 +52,15 @@ export function FooterLinks({ sidebarType }: FooterLinksProps) {
 
         const linkContent = (
           <>
-            <Icon className="size-4" />
-            <span className="group-data-[collapsible=icon]:hidden ml-1">
+            <Icon className="size-4" data-testid={`icon-${link.name}`} />
+            <span className="group-data-[collapsible=icon]:hidden ml-2">
               {t(link.name)}
             </span>
           </>
         );
 
         return (
-          <SidebarMenuItem key={link.name}>
+          <SidebarMenuItem key={`${link.name}-${link.url}`}>
             <SidebarMenuButton
               asChild={!isExternal}
               tooltip={t(link.name)}
@@ -72,11 +72,14 @@ export function FooterLinks({ sidebarType }: FooterLinksProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${t(link.name)} (opens in new tab)`}
+                  data-testid={`footer-link-${link.name}`}
                 >
                   {linkContent}
                 </a>
               ) : (
-                <Link href={link.url}>{linkContent}</Link>
+                <Link href={link.url} data-testid={`footer-link-${link.name}`}>
+                  {linkContent}
+                </Link>
               )}
             </SidebarMenuButton>
           </SidebarMenuItem>

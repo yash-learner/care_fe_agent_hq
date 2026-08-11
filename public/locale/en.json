@@ -6685,8 +6685,9 @@
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
   "℞": "℞",
-  "documentation": "Documentation",
-  "help": "Help",
-  "resources": "Resources",
-  "external_link": "External Link"
+  "footer_link_documentation": "Documentation",
+  "footer_link_help": "Help",
+  "footer_link_resources": "Resources",
+  "footer_link_support": "Support",
+  "footer_link_external_link": "External Link"
 }

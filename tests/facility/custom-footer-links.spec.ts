@@ -27,6 +27,12 @@ test.describe("Custom Footer Links", () => {
       // User avatar should be present
       const userAvatar = sidebarFooter.locator('[role="button"]').first();
       await expect(userAvatar).toBeVisible();
+
+      // Footer links should be present
+      const documentationLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
+      );
+      await expect(documentationLink).toBeVisible();
     });
   });
 
@@ -36,24 +42,19 @@ test.describe("Custom Footer Links", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Check for external link with ExternalLink icon", async () => {
-      // If custom footer links are configured with external links,
-      // they should have target="_blank" and rel="noopener noreferrer"
-      const externalLinks = page.locator(
-        '[data-sidebar="footer"] a[target="_blank"]',
+    await test.step("Check external link with ExternalLink icon", async () => {
+      const externalLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
       );
-      const count = await externalLinks.count();
+      await expect(externalLink).toBeVisible();
+      await expect(externalLink).toHaveAttribute("target", "_blank");
+      await expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
 
-      if (count > 0) {
-        // Verify first external link has correct attributes
-        const firstLink = externalLinks.first();
-        await expect(firstLink).toHaveAttribute("target", "_blank");
-        await expect(firstLink).toHaveAttribute("rel", "noopener noreferrer");
-
-        // Verify ExternalLink icon is present
-        const externalIcon = firstLink.locator('svg[class*="lucide-external"]');
-        await expect(externalIcon).toBeVisible();
-      }
+      // Verify ExternalLink icon is present
+      const externalIcon = externalLink.getByTestId(
+        "icon-footer_link_documentation",
+      );
+      await expect(externalIcon).toBeVisible();
     });
   });
 
@@ -63,29 +64,16 @@ test.describe("Custom Footer Links", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Check for internal link with ArrowRight icon", async () => {
-      // Internal links should not have target="_blank"
-      const footerLinks = page.locator(
-        '[data-sidebar="footer"] a:not([target="_blank"])',
-      );
-      const count = await footerLinks.count();
+    await test.step("Check internal link with ArrowRight icon", async () => {
+      const internalLink = page.getByTestId("footer-link-footer_link_support");
+      await expect(internalLink).toBeVisible();
 
-      if (count > 0) {
-        // Find links that are not the user avatar dropdown
-        const internalLinks = footerLinks.filter({
-          has: page.locator('svg[class*="lucide-arrow-right"]'),
-        });
-        const internalCount = await internalLinks.count();
+      // Verify ArrowRight icon is present
+      const arrowIcon = internalLink.getByTestId("icon-footer_link_support");
+      await expect(arrowIcon).toBeVisible();
 
-        if (internalCount > 0) {
-          // Verify ArrowRight icon is present
-          const firstLink = internalLinks.first();
-          const arrowIcon = firstLink.locator(
-            'svg[class*="lucide-arrow-right"]',
-          );
-          await expect(arrowIcon).toBeVisible();
-        }
-      }
+      // Internal link should not have target="_blank"
+      await expect(internalLink).not.toHaveAttribute("target", "_blank");
     });
   });
 
@@ -96,29 +84,25 @@ test.describe("Custom Footer Links", () => {
     });
 
     await test.step("Click external link and verify new tab", async () => {
-      const externalLinks = page.locator(
-        '[data-sidebar="footer"] a[target="_blank"]',
+      const externalLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
       );
-      const count = await externalLinks.count();
+      await expect(externalLink).toBeVisible();
 
-      if (count > 0) {
-        const firstLink = externalLinks.first();
+      // Listen for new page event
+      const [newPage] = await Promise.all([
+        context.waitForEvent("page"),
+        externalLink.click(),
+      ]);
 
-        // Listen for new page event
-        const [newPage] = await Promise.all([
-          context.waitForEvent("page"),
-          firstLink.click(),
-        ]);
+      // Verify new page opened
+      expect(newPage).toBeDefined();
+      await newPage.waitForLoadState();
 
-        // Verify new page opened
-        expect(newPage).toBeDefined();
-        await newPage.waitForLoadState();
+      // Original page should still be on the same URL
+      expect(page.url()).toContain(`/facility/${facilityId}/overview`);
 
-        // Original page should still be on the same URL
-        expect(page.url()).toContain(`/facility/${facilityId}/overview`);
-
-        await newPage.close();
-      }
+      await newPage.close();
     });
   });
 
@@ -129,28 +113,17 @@ test.describe("Custom Footer Links", () => {
     });
 
     await test.step("Click internal link and verify same-tab navigation", async () => {
-      const internalLinks = page.locator(
-        '[data-sidebar="footer"] a:not([target="_blank"])',
-      );
+      const internalLink = page.getByTestId("footer-link-footer_link_support");
+      await expect(internalLink).toBeVisible();
 
-      // Filter to find actual footer links (exclude user avatar)
-      const footerNavLinks = internalLinks.filter({
-        has: page.locator('svg[class*="lucide-arrow-right"]'),
-      });
-      const count = await footerNavLinks.count();
+      const href = await internalLink.getAttribute("href");
+      expect(href).toBe("/help");
 
-      if (count > 0) {
-        const firstLink = footerNavLinks.first();
-        const href = await firstLink.getAttribute("href");
+      await internalLink.click();
+      await page.waitForLoadState("networkidle");
 
-        if (href) {
-          await firstLink.click();
-          await page.waitForLoadState("networkidle");
-
-          // Verify navigation occurred in same tab
-          expect(page.url()).toContain(href);
-        }
-      }
+      // Verify navigation occurred in same tab
+      expect(page.url()).toContain("/help");
     });
   });
 
@@ -161,24 +134,39 @@ test.describe("Custom Footer Links", () => {
 
       const sidebarFooter = page.locator('[data-sidebar="footer"]');
       await expect(sidebarFooter).toBeVisible();
+
+      // Facility-specific link should be visible
+      const facilityLink = page.getByTestId(
+        "footer-link-footer_link_facility_only",
+      );
+      await expect(facilityLink).toBeVisible();
+
+      // Patient-specific link should NOT be visible
+      const patientLink = page.getByTestId(
+        "footer-link-footer_link_patient_only",
+      );
+      await expect(patientLink).not.toBeVisible();
     });
 
     await test.step("Check footer links in patient sidebar", async () => {
-      // Navigate to patient context (if configured links apply)
+      // Navigate to patient context
       await page.goto("/patients");
       await page.waitForLoadState("networkidle");
 
       const sidebarFooter = page.locator('[data-sidebar="footer"]');
       await expect(sidebarFooter).toBeVisible();
-    });
 
-    await test.step("Check footer links in admin sidebar", async () => {
-      // Navigate to admin context (if configured links apply)
-      await page.goto("/admin");
-      await page.waitForLoadState("networkidle");
+      // Patient-specific link should be visible
+      const patientLink = page.getByTestId(
+        "footer-link-footer_link_patient_only",
+      );
+      await expect(patientLink).toBeVisible();
 
-      const sidebarFooter = page.locator('[data-sidebar="footer"]');
-      await expect(sidebarFooter).toBeVisible();
+      // Facility-specific link should NOT be visible
+      const facilityLink = page.getByTestId(
+        "footer-link-footer_link_facility_only",
+      );
+      await expect(facilityLink).not.toBeVisible();
     });
   });
 
@@ -189,20 +177,33 @@ test.describe("Custom Footer Links", () => {
     });
 
     await test.step("Verify link order matches configuration", async () => {
-      // Get all footer links (excluding user avatar)
-      const footerLinks = page.locator('[data-sidebar="footer"] a').filter({
-        has: page.locator('svg[class*="lucide"]'),
-      });
+      // Get all footer links in order
+      const footerLinks = page
+        .locator('[data-sidebar="footer"] a[data-testid^="footer-link-"]')
+        .all();
 
-      const count = await footerLinks.count();
+      const links = await footerLinks;
+      expect(links.length).toBeGreaterThan(0);
 
-      if (count > 0) {
-        // Verify links are present and ordered
-        const linkTexts = await footerLinks.allTextContents();
-        expect(linkTexts.length).toBeGreaterThan(0);
+      // Verify links are in expected order
+      const firstLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
+      );
+      const secondLink = page.getByTestId("footer-link-footer_link_support");
 
-        // Links should be in the order they were configured
-        // (This test validates structure but cannot verify exact order without knowing config)
+      await expect(firstLink).toBeVisible();
+      await expect(secondLink).toBeVisible();
+
+      // First link should appear before second link in the DOM
+      const firstLinkPosition = await firstLink.boundingBox();
+      const secondLinkPosition = await secondLink.boundingBox();
+
+      expect(firstLinkPosition).not.toBeNull();
+      expect(secondLinkPosition).not.toBeNull();
+
+      // In a vertical sidebar, y-coordinate should be lower for second link
+      if (firstLinkPosition && secondLinkPosition) {
+        expect(firstLinkPosition.y).toBeLessThan(secondLinkPosition.y);
       }
     });
   });
@@ -213,13 +214,18 @@ test.describe("Custom Footer Links", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Check facility-specific links", async () => {
-      const sidebarFooter = page.locator('[data-sidebar="footer"]');
-      await expect(sidebarFooter).toBeVisible();
+    await test.step("Check facility-specific filtering", async () => {
+      // Facility-only link should be visible in facility sidebar
+      const facilityLink = page.getByTestId(
+        "footer-link-footer_link_facility_only",
+      );
+      await expect(facilityLink).toBeVisible();
 
-      // If links are configured with sidebarFor filter,
-      // only matching links should be visible
-      // (Implementation depends on specific configuration)
+      // Links without sidebarFor should also be visible
+      const documentationLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
+      );
+      await expect(documentationLink).toBeVisible();
     });
   });
 
@@ -240,21 +246,15 @@ test.describe("Custom Footer Links", () => {
       }
     });
 
-    await test.step("Hover footer link to show tooltip", async () => {
-      const footerLinks = page.locator('[data-sidebar="footer"] a').filter({
-        has: page.locator('svg[class*="lucide"]'),
-      });
+    await test.step("Verify footer links still visible in collapsed state", async () => {
+      const footerLink = page.getByTestId(
+        "footer-link-footer_link_documentation",
+      );
+      await expect(footerLink).toBeVisible();
 
-      const count = await footerLinks.count();
-
-      if (count > 0) {
-        const firstLink = footerLinks.first();
-        await firstLink.hover();
-
-        // Tooltip should appear (implementation uses SidebarMenuButton tooltip prop)
-        // Verify tooltip is visible if configured
-        await page.waitForTimeout(500);
-      }
+      // Icon should be visible in collapsed state
+      const icon = footerLink.getByTestId("icon-footer_link_documentation");
+      await expect(icon).toBeVisible();
     });
   });
 });

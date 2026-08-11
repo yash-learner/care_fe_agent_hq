@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 import dotenv from "dotenv";
 import path from "path";
+// Load test environment first, then fall back to .env.local and .env
+dotenv.config({ path: path.resolve(__dirname, ".env.test") });
 dotenv.config({ path: path.resolve(__dirname, ".env.local") });
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 

@@ -410,9 +410,19 @@ const careConfig = {
   /**
    * Custom footer links to display in sidebar footer above user avatar
    */
-  customFooterLinks: env.REACT_CUSTOM_FOOTER_LINKS
-    ? JSON.parse(env.REACT_CUSTOM_FOOTER_LINKS)
-    : [],
+  customFooterLinks: (() => {
+    try {
+      return env.REACT_CUSTOM_FOOTER_LINKS
+        ? JSON.parse(env.REACT_CUSTOM_FOOTER_LINKS)
+        : [];
+    } catch (error) {
+      console.error(
+        "Failed to parse REACT_CUSTOM_FOOTER_LINKS:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+      return [];
+    }
+  })(),
 } as const;
 
 export default careConfig;
