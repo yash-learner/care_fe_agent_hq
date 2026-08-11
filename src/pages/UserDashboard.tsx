@@ -1,6 +1,12 @@
-import { ChevronRight, LogOut, SquarePen, User2Icon } from "lucide-react";
+import {
+  ChevronRight,
+  LogOut,
+  Search,
+  SquarePen,
+  User2Icon,
+} from "lucide-react";
 import { Link } from "raviger";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import CareIcon from "@/CAREUI/icons/CareIcon";
@@ -16,6 +22,7 @@ import {
 import { TooltipComponent } from "@/components/ui/tooltip";
 
 import { Avatar } from "@/components/Common/Avatar";
+import { Input } from "@/components/ui/input";
 
 import { useAccessibleRoleOrganizationsList } from "@/hooks/useAccessibleRoleOrganizationsList";
 import useAuthUser, { useAuthContext } from "@/hooks/useAuthUser";
@@ -37,6 +44,8 @@ type TabContentProps = {
   description: string;
   renderChild: (item: FacilityBareMinimum | Organization) => React.ReactNode;
   isLoading?: boolean;
+  showSearch?: boolean;
+  searchPlaceholder?: string;
 };
 
 export default function UserDashboard() {
@@ -214,6 +223,8 @@ export default function UserDashboard() {
                 tabId="facilities-panel"
                 tabItems={facilities}
                 description={t("dashboard_tab_facilities")}
+                showSearch={true}
+                searchPlaceholder={t("search_facilities_placeholder")}
                 renderChild={(facility) => {
                   return (
                     <Link
@@ -332,7 +343,31 @@ const TabContent = ({
   description,
   renderChild,
   isLoading,
+  showSearch = false,
+  searchPlaceholder,
 }: TabContentProps) => {
+  const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query with 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter items based on debounced search query
+  const filteredItems = useMemo(() => {
+    if (!debouncedSearchQuery.trim() || !showSearch) {
+      return tabItems;
+    }
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return tabItems.filter((item) => item.name.toLowerCase().includes(query));
+  }, [tabItems, debouncedSearchQuery, showSearch]);
+
   return (
     <section
       className="space-y-3 md:space-y-4"
@@ -341,6 +376,31 @@ const TabContent = ({
       aria-labelledby={tabId}
     >
       <p className="text-sm text-gray-800 font-normal px-1">{description}</p>
+
+      {showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder={searchPlaceholder || t("search")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-4"
+            aria-label={searchPlaceholder || t("search")}
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setSearchQuery("")}
+              aria-label={t("clear_search")}
+            >
+              <CareIcon icon="l-times" className="size-4" />
+            </Button>
+          )}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -356,9 +416,19 @@ const TabContent = ({
             </Card>
           ))}
         </div>
+      ) : filteredItems.length === 0 && showSearch && debouncedSearchQuery ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          <div className="text-center space-y-2">
+            <p className="text-gray-500 text-base">
+              {t("no_facilities_found_matching", {
+                query: debouncedSearchQuery,
+              })}
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {tabItems.map((item: FacilityBareMinimum | Organization) => {
+          {filteredItems.map((item: FacilityBareMinimum | Organization) => {
             return renderChild(item);
           })}
         </div>
