@@ -20,6 +20,7 @@ import { FacilitySwitcher } from "@/components/ui/sidebar/facility/facility-swit
 import { LocationNav } from "@/components/ui/sidebar/facility/location/location-nav";
 import { LocationSwitcher } from "@/components/ui/sidebar/facility/location/location-switcher";
 import { ServiceNav } from "@/components/ui/sidebar/facility/service/service-nav";
+import { FooterLinks } from "@/components/ui/sidebar/footer-links";
 import {
   FacilityNavUser,
   PatientNavUser,
@@ -190,6 +191,7 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
+        <FooterLinks sidebarType={sidebarFor} />
         {patientSidebar ? (
           <PatientNavUser />
         ) : (

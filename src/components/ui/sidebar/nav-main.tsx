@@ -52,6 +52,8 @@ export interface NavigationLink {
   icon?: ReactNode;
   visibility?: boolean;
   children?: NavigationLink[];
+  target?: "_blank" | "_self";
+  sidebarFor?: string[];
 }
 
 function NavLink({

@@ -79,8 +79,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -407,6 +406,23 @@ const careConfig = {
   maxFormDialogFavorites: env.REACT_MAX_FORM_DIALOG_FAVORITES
     ? parseInt(env.REACT_MAX_FORM_DIALOG_FAVORITES, 10)
     : 5,
+
+  /**
+   * Custom footer links to display in sidebar footer above user avatar
+   */
+  customFooterLinks: (() => {
+    try {
+      return env.REACT_CUSTOM_FOOTER_LINKS
+        ? JSON.parse(env.REACT_CUSTOM_FOOTER_LINKS)
+        : [];
+    } catch (error) {
+      console.error(
+        "Failed to parse REACT_CUSTOM_FOOTER_LINKS:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+      return [];
+    }
+  })(),
 } as const;
 
 export default careConfig;

@@ -6684,5 +6684,10 @@
   "your_request_order_list": "Your Request Order List",
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
-  "℞": "℞"
+  "℞": "℞",
+  "footer_link_documentation": "Documentation",
+  "footer_link_help": "Help",
+  "footer_link_resources": "Resources",
+  "footer_link_support": "Support",
+  "footer_link_external_link": "External Link"
 }
