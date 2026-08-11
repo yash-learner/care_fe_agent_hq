@@ -41,10 +41,6 @@ import FileUploadDialog from "@/components/Files/FileUploadDialog";
 
 import useFileUpload from "@/hooks/useFileUpload";
 
-import mutate from "@/Utils/request/mutate";
-import query from "@/Utils/request/query";
-import { PaginatedResponse } from "@/Utils/request/types";
-import { formatName } from "@/Utils/utils";
 import { Code } from "@/types/base/code/code";
 import {
   DIAGNOSTIC_REPORT_STATUS_COLORS,
@@ -70,11 +66,16 @@ import {
   FileReadMinimal,
 } from "@/types/files/file";
 import fileApi from "@/types/files/fileApi";
+import mutate from "@/Utils/request/mutate";
+import query from "@/Utils/request/query";
+import { PaginatedResponse } from "@/Utils/request/types";
+import { formatName } from "@/Utils/utils";
 
 import { PLUGIN_Component } from "@/PluginEngine";
 
 import { DottedDivider } from "@/components/careui/dotted-divider";
 import { Interpretation } from "@/types/base/qualifiedRange/qualifiedRange";
+import { getAvailableReportCodes } from "@/Utils/diagnosticReportUtils";
 
 interface DiagnosticReportFormProps {
   patientId: string;
@@ -139,23 +140,12 @@ export function DiagnosticReportForm({
     diagnosticReports.length > 0 ? diagnosticReports[0] : null;
   const hasReport = !!latestReport;
 
-  // Get codes that have already been used in diagnostic reports
-  const usedReportCodes = new Set(
-    diagnosticReports
-      .map((report) => report.code?.code)
-      .filter((code): code is string => !!code),
-  );
-
-  // Get available codes (not yet used for any report)
-  const availableReportCodes =
-    activityDefinition?.diagnostic_report_codes?.filter(
-      (code) => !usedReportCodes.has(code.code),
-    ) || [];
-
-  // Check if more reports can be created
-  const canCreateMoreReports =
-    availableReportCodes.length > 0 ||
-    !activityDefinition?.diagnostic_report_codes?.length;
+  // Get available report codes using the utility helper
+  const { availableReportCodes, canCreateMoreReports } =
+    getAvailableReportCodes(
+      diagnosticReports,
+      activityDefinition?.diagnostic_report_codes,
+    );
 
   // Check if all required specimens are collected
   const hasCollectedSpecimens =

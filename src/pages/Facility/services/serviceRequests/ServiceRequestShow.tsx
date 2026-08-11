@@ -48,6 +48,7 @@ import {
 import specimenApi from "@/types/emr/specimen/specimenApi";
 import { SpecimenDefinitionRead } from "@/types/emr/specimenDefinition/specimenDefinition";
 
+import { getAvailableReportCodes } from "@/Utils/diagnosticReportUtils";
 import { ShortcutBadge } from "@/Utils/keyboardShortcutComponents";
 import BackButton from "@/components/Common/BackButton";
 import { PatientHeader } from "@/components/Patient/PatientHeader";
@@ -597,23 +598,10 @@ export default function ServiceRequestShow({
               </div>
             )}
             {(() => {
-              // Get codes that have already been used in diagnostic reports
-              const usedReportCodes = new Set(
-                diagnosticReports
-                  .map((report) => report.code?.code)
-                  .filter((code): code is string => !!code),
+              const { canCreateMoreReports } = getAvailableReportCodes(
+                diagnosticReports,
+                activityDefinition?.diagnostic_report_codes,
               );
-
-              // Get available codes (not yet used for any report)
-              const availableReportCodes =
-                activityDefinition?.diagnostic_report_codes?.filter(
-                  (code) => !usedReportCodes.has(code.code),
-                ) || [];
-
-              // Check if more reports can be created
-              const canCreateMoreReports =
-                availableReportCodes.length > 0 ||
-                !activityDefinition?.diagnostic_report_codes?.length;
 
               // Show form if no reports exist, or if more reports can be created and no final report exists
               const shouldShowForm =
