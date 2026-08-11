@@ -11,6 +11,8 @@ import { z } from "zod";
 import careConfig from "@/../care.config";
 import { cn } from "@/lib/utils";
 
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+
 import { DisablingCover } from "@/components/Common/DisablingCover";
 import Autocomplete from "@/components/ui/autocomplete";
 import { Button } from "@/components/ui/button";
@@ -236,6 +238,17 @@ export function AddSupplyDeliveryForm({
     control: form.control,
     name: "items",
   });
+
+  // Setup keyboard shortcuts for form submission
+  useKeyboardShortcuts(
+    ["global", "facility:inventory:delivery"],
+    {},
+    {
+      "submit-action": () => {
+        form.handleSubmit(onSubmit)();
+      },
+    },
+  );
 
   const loadFromSupplyRequests = () => {
     setIsSelectDialogOpen(true);
@@ -602,6 +615,31 @@ export function AddSupplyDeliveryForm({
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
+                  onKeyDown={(e) => {
+                    // Prevent Enter from submitting the form unless it's from a button
+                    // Plain Enter moves focus to next field; Shift+Enter submits
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      (e.target as HTMLElement).tagName !== "BUTTON"
+                    ) {
+                      e.preventDefault();
+                      // Move focus to next focusable element
+                      const target = e.target as HTMLElement;
+                      const focusableElements = Array.from(
+                        e.currentTarget.querySelectorAll<HTMLElement>(
+                          "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])",
+                        ),
+                      );
+                      const currentIndex = focusableElements.indexOf(target);
+                      if (
+                        currentIndex > -1 &&
+                        currentIndex < focusableElements.length - 1
+                      ) {
+                        focusableElements[currentIndex + 1].focus();
+                      }
+                    }
+                  }}
                   className="space-y-6"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
