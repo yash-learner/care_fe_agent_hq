@@ -87,11 +87,11 @@ const DeliveryOrderContent = ({
 
               const batchNumber = internal
                 ? delivery.supplied_inventory_item?.product?.batch?.lot_number
-                : undefined;
+                : delivery.supplied_item?.batch?.lot_number;
 
               const expiryDate = internal
                 ? delivery.supplied_inventory_item?.product?.expiration_date
-                : undefined;
+                : delivery.supplied_item?.expiration_date;
 
               return {
                 product: productName || "-",
