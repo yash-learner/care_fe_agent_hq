@@ -203,6 +203,8 @@ export function DiagnosticReportForm({
         queryClient.invalidateQueries({
           queryKey: ["diagnosticReport"],
         });
+        // Reset selected code to allow creating another report
+        setSelectedReportCode(null);
       },
       onError: (err: any) => {
         toast.error(
@@ -225,7 +227,7 @@ export function DiagnosticReportForm({
       // Reset to null if there are multiple available codes and none selected
       setSelectedReportCode(null);
     }
-  }, [diagnosticReports, availableCodes]);
+  }, [diagnosticReports]);
 
   // Effect to handle fullReport changes
   useEffect(() => {
@@ -1252,63 +1254,74 @@ export function DiagnosticReportForm({
                   )}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+            ) : null}
+
+            {/* Always render creation section when codes are available */}
+            {availableCodes.length > 0 && (
+              <div className="space-y-4 bg-gray-50 rounded-lg p-4 mt-4">
                 <div className="text-gray-500 flex justify-center items-center">
                   <p className="mt-2 text-sm text-gray-500 text-center">
                     {!hasCollectedSpecimens
                       ? t("collect_specimen_before_report")
-                      : availableCodes.length === 0
-                        ? t("all_diagnostic_report_codes_used")
+                      : hasReport
+                        ? t("select_code_to_create_another_report")
                         : t("no_test_results_recorded")}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
-                  {availableCodes.length > 0 && (
-                    <div className="flex-1 min-w-0">
-                      <Select
-                        value={selectedReportCode?.code}
-                        onValueChange={(value) => {
-                          const code = availableCodes.find(
-                            (c) => c.code === value,
-                          );
-                          setSelectedReportCode(code || null);
-                        }}
-                        disabled={!hasCollectedSpecimens || disableEdit}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={t("select_diagnostic_report_type")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCodes.map((code) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              <div className="flex flex-col">
-                                <span className="truncate">
-                                  {code.display} ({code.code})
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <Select
+                      value={selectedReportCode?.code}
+                      onValueChange={(value) => {
+                        const code = availableCodes.find(
+                          (c) => c.code === value,
+                        );
+                        setSelectedReportCode(code || null);
+                      }}
+                      disabled={!hasCollectedSpecimens || disableEdit}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={t("select_diagnostic_report_type")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCodes.map((code) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            <div className="flex flex-col">
+                              <span className="truncate">
+                                {code.display} ({code.code})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button
                     onClick={handleCreateReport}
                     disabled={
                       disableEdit ||
                       isCreatingReport ||
                       !hasCollectedSpecimens ||
-                      availableCodes.length === 0 ||
-                      (availableCodes.length > 0 && !selectedReportCode)
+                      !selectedReportCode
                     }
                     className="w-full sm:w-auto sm:shrink-0"
                   >
                     <PlusCircle className="size-4 mr-2" />
                     {t("create_report")}
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Show message when no codes available and no report exists */}
+            {!hasReport && availableCodes.length === 0 && (
+              <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+                <div className="text-gray-500 flex justify-center items-center">
+                  <p className="mt-2 text-sm text-gray-500 text-center">
+                    {t("all_diagnostic_report_codes_used")}
+                  </p>
                 </div>
               </div>
             )}
