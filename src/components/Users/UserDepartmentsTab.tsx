@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "raviger";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useInView } from "react-intersection-observer";
 
 import CareIcon from "@/CAREUI/icons/CareIcon";
 
@@ -110,20 +112,49 @@ function DepartmentCard({
   );
 }
 
+const PAGE_LIMIT = 20;
+
 export default function UserDepartmentsTab({ userData }: userChildProps) {
   const { t } = useTranslation();
   const { facilityId } = useCurrentFacility();
+  const { ref, inView } = useInView();
 
-  const { data: departmentsData, isLoading } = useQuery({
+  const {
+    data: departmentsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["facilityOrganizations", "byUser", facilityId, userData.id],
-    queryFn: query(facilityOrganizationApi.list, {
-      pathParams: { facilityId: facilityId! },
-      queryParams: {
-        containing_user: userData.id,
-      },
+    queryFn: async ({ pageParam = 0, signal }) => {
+      const response = await query(facilityOrganizationApi.list, {
+        pathParams: { facilityId: facilityId! },
+        queryParams: {
+          containing_user: userData.id,
+          limit: String(PAGE_LIMIT),
+          offset: String(pageParam),
+        },
+      })({ signal });
+      return response;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const currentOffset = allPages.length * PAGE_LIMIT;
+      return currentOffset < lastPage.count ? currentOffset : null;
+    },
+    select: (data) => ({
+      results: data?.pages.flatMap((p) => p.results) || [],
+      count: data?.pages[0]?.count || 0,
     }),
     enabled: !!facilityId,
   });
+
+  useEffect(() => {
+    if (inView && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, fetchNextPage]);
 
   if (isLoading) {
     return (
@@ -163,16 +194,25 @@ export default function UserDepartmentsTab({ userData }: userChildProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {departments.map((department) => (
-            <DepartmentCard
-              key={department.id}
-              department={department}
-              userData={userData}
-              facilityId={facilityId}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {departments.map((department) => (
+              <DepartmentCard
+                key={department.id}
+                department={department}
+                userData={userData}
+                facilityId={facilityId}
+              />
+            ))}
+          </div>
+          {hasNextPage && (
+            <div ref={ref} className="flex justify-center py-4">
+              {isFetchingNextPage && (
+                <div className="text-sm text-gray-500">{t("loading")}</div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
