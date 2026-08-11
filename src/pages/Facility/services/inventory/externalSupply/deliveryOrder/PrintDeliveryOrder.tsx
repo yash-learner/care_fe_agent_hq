@@ -73,12 +73,11 @@ const DeliveryOrderContent = ({
           <PrintTable
             headers={[
               { key: "product" },
+              { key: "lot_batch_number" },
+              { key: "expiry_date" },
               { key: "quantity" },
               { key: "status" },
               { key: "condition" },
-              ...(internal
-                ? [{ key: "lot_batch_number" }, { key: "expiry_date" }]
-                : []),
             ]}
             rows={supplyDeliveries.map((delivery) => {
               const productName = internal
@@ -96,13 +95,13 @@ const DeliveryOrderContent = ({
 
               return {
                 product: productName || "-",
-                quantity: round(delivery.supplied_item_quantity),
-                status: t(delivery.status),
-                condition: t(delivery.supplied_item_condition || "normal"),
                 lot_batch_number: batchNumber || "-",
                 expiry_date: expiryDate
                   ? format(new Date(expiryDate), "dd/MM/yyyy")
                   : "-",
+                quantity: round(delivery.supplied_item_quantity),
+                status: t(delivery.status),
+                condition: t(delivery.supplied_item_condition || "normal"),
               };
             })}
           />
