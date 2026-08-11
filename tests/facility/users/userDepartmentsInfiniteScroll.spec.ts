@@ -10,11 +10,31 @@ test.use({ storageState: "tests/.auth/user.json" });
 
 test.describe("User Departments Tab Infinite Scroll", () => {
   let testUserId: string;
+  let testRoleId: string;
 
   test.beforeAll(async () => {
     const facilityId = getFacilityId();
     const apiUrl = getApiUrl();
     const headers = getApiHeaders();
+
+    // Fetch available roles from organization API
+    const rolesRes = await fetch(
+      `${apiUrl}/api/v1/organization/?org_type=role&limit=1`,
+      { headers },
+    );
+    if (!rolesRes.ok) {
+      throw new Error(`Failed to fetch roles: ${rolesRes.status}`);
+    }
+    const rolesData = (await rolesRes.json()) as {
+      results: Array<{ id: string }>;
+    };
+
+    if (rolesData.results.length === 0) {
+      throw new Error("No roles available for testing");
+    }
+
+    testRoleId = rolesData.results[0].id;
+    console.log(`Using test role ID: ${testRoleId}`);
 
     // Create or find a test user
     const usersRes = await fetch(
@@ -116,7 +136,7 @@ test.describe("User Departments Tab Infinite Scroll", () => {
           headers,
           body: JSON.stringify({
             user: testUserId,
-            role: "member", // Use a valid role
+            role: testRoleId,
           }),
         },
       );
@@ -221,15 +241,55 @@ test.describe("User Departments Tab Infinite Scroll", () => {
     });
   });
 
-  test("user with exactly 14 departments shows all without scroll indicator", async ({
+  test("user with exactly 14 departments shows all without pagination", async ({
     page,
   }) => {
     const facilityId = getFacilityId();
+    const apiUrl = getApiUrl();
+    const headers = getApiHeaders();
 
-    await test.step("Create a test user with exactly 14 departments", async () => {
-      // This test would need a fresh user with exactly 14 departments
-      // For simplicity, we'll just verify the behavior doesn't break with fewer departments
-      console.log("Note: This test assumes user has <= 20 departments");
+    let user14Id: string | null = null;
+
+    await test.step("Find or create a user with exactly 14 departments", async () => {
+      // Try to find a user with exactly 14 departments
+      const usersRes = await fetch(
+        `${apiUrl}/api/v1/facility/${facilityId}/users/?limit=20`,
+        { headers },
+      );
+      if (!usersRes.ok) {
+        throw new Error(`Failed to list users: ${usersRes.status}`);
+      }
+
+      const usersData = (await usersRes.json()) as {
+        results: Array<{ id: string; username: string }>;
+      };
+
+      // Check each user for department count
+      for (const user of usersData.results) {
+        const deptRes = await fetch(
+          `${apiUrl}/api/v1/facility/${facilityId}/organizations/?containing_user=${user.id}&limit=1`,
+          { headers },
+        );
+        if (!deptRes.ok) {
+          continue;
+        }
+
+        const deptData = (await deptRes.json()) as { count: number };
+        if (deptData.count === 14) {
+          user14Id = user.id;
+          console.log(
+            `Found user with exactly 14 departments: ${user.username}`,
+          );
+          break;
+        }
+      }
+
+      if (!user14Id) {
+        console.log(
+          "⚠️  No user with exactly 14 departments found, skipping test",
+        );
+        test.skip();
+      }
     });
 
     await test.step("Navigate to user's Departments tab", async () => {
@@ -243,14 +303,17 @@ test.describe("User Departments Tab Infinite Scroll", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Verify departments are visible", async () => {
+    await test.step("Verify all 14 departments are visible", async () => {
       const departmentCards = page.locator(".grid > .h-full");
-      const count = await departmentCards.count();
+      await expect(departmentCards.first()).toBeVisible();
 
-      if (count > 0) {
-        await expect(departmentCards.first()).toBeVisible();
-        console.log(`User has ${count} departments visible`);
-      }
+      const count = await departmentCards.count();
+      expect(count).toBe(14);
+      console.log(`✅ All ${count} departments visible without pagination`);
+
+      // Verify no pagination sentinel is present (no "loading" indicator at bottom)
+      const loadingSentinel = page.getByText("loading", { exact: false });
+      await expect(loadingSentinel).not.toBeVisible();
     });
   });
 
