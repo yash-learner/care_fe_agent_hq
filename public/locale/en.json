@@ -6684,5 +6684,7 @@
   "your_request_order_list": "Your Request Order List",
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
-  "℞": "℞"
+  "℞": "℞",
+  "search_facilities_placeholder": "Search facilities",
+  "no_facilities_found_matching": "No facilities found matching '{{query}}'"
 }
