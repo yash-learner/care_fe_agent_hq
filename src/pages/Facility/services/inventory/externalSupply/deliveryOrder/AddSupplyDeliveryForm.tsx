@@ -617,12 +617,27 @@ export function AddSupplyDeliveryForm({
                   onSubmit={form.handleSubmit(onSubmit)}
                   onKeyDown={(e) => {
                     // Prevent Enter from submitting the form unless it's from a button
+                    // Plain Enter moves focus to next field; Shift+Enter submits
                     if (
                       e.key === "Enter" &&
                       !e.shiftKey &&
                       (e.target as HTMLElement).tagName !== "BUTTON"
                     ) {
                       e.preventDefault();
+                      // Move focus to next focusable element
+                      const target = e.target as HTMLElement;
+                      const focusableElements = Array.from(
+                        e.currentTarget.querySelectorAll<HTMLElement>(
+                          "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])",
+                        ),
+                      );
+                      const currentIndex = focusableElements.indexOf(target);
+                      if (
+                        currentIndex > -1 &&
+                        currentIndex < focusableElements.length - 1
+                      ) {
+                        focusableElements[currentIndex + 1].focus();
+                      }
                     }
                   }}
                   className="space-y-6"
