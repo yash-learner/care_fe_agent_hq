@@ -21,6 +21,7 @@ import {
 import { NavigationLink } from "@/components/ui/sidebar/nav-main";
 
 import { Avatar } from "@/components/Common/Avatar";
+import { Badge } from "@/components/ui/badge";
 
 import { useAppVersion } from "@/hooks/useAppVersion";
 import useAuthUser, { useAuthContext } from "@/hooks/useAuthUser";
@@ -89,7 +90,12 @@ export function FacilityNavUser({
                   <span className="truncate font-semibold">
                     {formatName(user)}
                   </span>
-                  <span className="truncate text-xs">{user.username}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-xs">{user.username}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {t(user.user_type)}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </DropdownMenuLabel>
