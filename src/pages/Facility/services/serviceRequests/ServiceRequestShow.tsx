@@ -48,6 +48,7 @@ import {
 import specimenApi from "@/types/emr/specimen/specimenApi";
 import { SpecimenDefinitionRead } from "@/types/emr/specimenDefinition/specimenDefinition";
 
+import { getAvailableReportCodes } from "@/Utils/diagnosticReportUtils";
 import { ShortcutBadge } from "@/Utils/keyboardShortcutComponents";
 import BackButton from "@/components/Common/BackButton";
 import { PatientHeader } from "@/components/Patient/PatientHeader";
@@ -596,20 +597,35 @@ export default function ServiceRequestShow({
                 </DropdownMenu>
               </div>
             )}
-            {(!diagnosticReports.length ||
-              diagnosticReports[0]?.status !==
-                DiagnosticReportStatus.final) && (
-              <DiagnosticReportForm
-                patientId={request.encounter.patient.id}
-                facilityId={facilityId}
-                serviceRequestId={serviceRequestId}
-                observationDefinitions={observationRequirements}
-                diagnosticReports={diagnosticReports}
-                activityDefinition={activityDefinition}
-                specimens={request.specimens || []}
-                disableEdit={disableEdit}
-              />
-            )}
+            {(() => {
+              const { canCreateMoreReports } = getAvailableReportCodes(
+                diagnosticReports,
+                activityDefinition?.diagnostic_report_codes,
+              );
+
+              // Show form if no reports exist, or if more reports can be created and no final report exists
+              const shouldShowForm =
+                !diagnosticReports.length ||
+                (canCreateMoreReports &&
+                  !diagnosticReports.some(
+                    (report) => report.status === DiagnosticReportStatus.final,
+                  ));
+
+              return (
+                shouldShowForm && (
+                  <DiagnosticReportForm
+                    patientId={request.encounter.patient.id}
+                    facilityId={facilityId}
+                    serviceRequestId={serviceRequestId}
+                    observationDefinitions={observationRequirements}
+                    diagnosticReports={diagnosticReports}
+                    activityDefinition={activityDefinition}
+                    specimens={request.specimens || []}
+                    disableEdit={disableEdit}
+                  />
+                )
+              );
+            })()}
           </div>
 
           {diagnosticReports.length > 0 && (
