@@ -2,10 +2,13 @@ import careConfig from "@careConfig";
 import { Link } from "raviger";
 import { useTranslation } from "react-i18next";
 
+import { useAppVersion } from "@/hooks/useAppVersion";
+
 export const AuthHero = () => {
   const { urls, stateLogo, customLogo, customLogoAlt } = careConfig;
   const customDescriptionHtml = __CUSTOM_DESCRIPTION_HTML__;
   const { t } = useTranslation();
+  const { versionInfo } = useAppVersion();
 
   const logos = [stateLogo, customLogo].filter(
     (logo) => logo?.light || logo?.dark,
@@ -111,6 +114,14 @@ export const AuthHero = () => {
             >
               {t("third_party_software_licenses")}
             </Link>
+            {versionInfo?.version && (
+              <>
+                <span className="mx-2 text-primary-400">|</span>
+                <span className="text-xs text-secondary-500">
+                  v{versionInfo.version}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
