@@ -103,9 +103,9 @@ export function FacilitySwitcher({
                         .toLowerCase()
                         .includes(search.toLowerCase()),
                     )
-                    .map((facility, index) => (
+                    .map((facility) => (
                       <CommandItem
-                        key={index}
+                        key={facility.id}
                         value={facility.name}
                         onSelect={() => setOpen(false)}
                         asChild
