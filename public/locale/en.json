@@ -6684,5 +6684,9 @@
   "your_request_order_list": "Your Request Order List",
   "zoom_in": "Zoom In",
   "zoom_out": "Zoom Out",
-  "℞": "℞"
+  "℞": "℞",
+  "documentation": "Documentation",
+  "help": "Help",
+  "resources": "Resources",
+  "external_link": "External Link"
 }
