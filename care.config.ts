@@ -429,6 +429,11 @@ const careConfig = {
    * Custom footer links to display at the bottom of the sidebar above the user avatar.
    * These links appear in all sidebar contexts unless restricted by visibleIn property.
    *
+   * Can be configured via REACT_CUSTOM_FOOTER_LINKS environment variable (JSON string):
+   * ```bash
+   * REACT_CUSTOM_FOOTER_LINKS='[{"name":"docs","url":"https://docs.example.com","target":"_blank"}]'
+   * ```
+   *
    * @example
    * ```typescript
    * customFooterLinks: [
@@ -461,21 +466,23 @@ const careConfig = {
    * }
    * ```
    */
-  customFooterLinks: [
-    // Example: External link to documentation (opens in new tab)
-    // {
-    //   name: "care_documentation",
-    //   url: "https://docs.ohc.network",
-    //   target: "_blank",
-    // },
-    // Example: Internal link to admin panel (navigates in current tab, visible only in facility sidebar)
-    // {
-    //   name: "admin_settings",
-    //   url: "/admin",
-    //   target: "_self",
-    //   visibleIn: [SidebarFor.FACILITY],
-    // },
-  ] as CustomFooterLink[],
+  customFooterLinks: (env.REACT_CUSTOM_FOOTER_LINKS
+    ? JSON.parse(env.REACT_CUSTOM_FOOTER_LINKS)
+    : [
+        // Example: External link to documentation (opens in new tab)
+        // {
+        //   name: "care_documentation",
+        //   url: "https://docs.ohc.network",
+        //   target: "_blank",
+        // },
+        // Example: Internal link to admin panel (navigates in current tab, visible only in facility sidebar)
+        // {
+        //   name: "admin_settings",
+        //   url: "/admin",
+        //   target: "_self",
+        //   visibleIn: [SidebarFor.FACILITY],
+        // },
+      ]) as CustomFooterLink[],
 } as const;
 
 export default careConfig;
