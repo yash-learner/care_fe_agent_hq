@@ -15,6 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AdminNav } from "@/components/ui/sidebar/admin-nav";
+import { CustomSidebarLinks } from "@/components/ui/sidebar/custom-links";
 import { FacilityNav } from "@/components/ui/sidebar/facility/facility-nav";
 import { FacilitySwitcher } from "@/components/ui/sidebar/facility/facility-switcher";
 import { LocationNav } from "@/components/ui/sidebar/facility/location/location-nav";
@@ -38,6 +39,7 @@ import { ServiceSwitcher } from "./facility/service/service-switcher";
 import PinPageDialog from "@/components/Common/PinPageDialog";
 import { FacilityBareMinimum } from "@/types/facility/facility";
 import { CurrentUserRead } from "@/types/user/user";
+import { SidebarContext } from "@careConfig";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: CurrentUserRead;
@@ -95,6 +97,28 @@ export function AppSidebar({
     if (!user?.organizations || !organizationId) return undefined;
     return user.organizations.find((org) => org.id === organizationId);
   }, [user?.organizations, organizationId]);
+
+  const sidebarContext: SidebarContext = React.useMemo(() => {
+    if (patientSidebar) return "patient";
+    if (adminSidebar) return "admin";
+    if (
+      selectedOrganization &&
+      !responsibilityId &&
+      !facilitySidebar &&
+      !facilityLocationSidebar &&
+      !facilityServiceSidebar
+    )
+      return "organization";
+    return "facility";
+  }, [
+    patientSidebar,
+    adminSidebar,
+    selectedOrganization,
+    responsibilityId,
+    facilitySidebar,
+    facilityLocationSidebar,
+    facilityServiceSidebar,
+  ]);
 
   React.useEffect(() => {
     if (!user?.facilities || !facilityId || !facilitySidebar) {
@@ -190,6 +214,7 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
+        <CustomSidebarLinks context={sidebarContext} />
         {patientSidebar ? (
           <PatientNavUser />
         ) : (
