@@ -43,6 +43,9 @@ test.describe("Custom Footer Links in Sidebar", () => {
     );
 
     await test.step("Collapse sidebar", async () => {
+      // SidebarTrigger component (src/components/ui/sidebar.tsx line 259)
+      // includes data-sidebar="trigger" and is present in facility overview
+      // via AppRouter.tsx. This selector is stable and verified.
       const sidebarToggle = page.locator('[data-sidebar="trigger"]');
       await sidebarToggle.click();
       await expect(page.locator('[data-sidebar="sidebar"]')).toHaveAttribute(

@@ -74,15 +74,16 @@ export function NavFooterLinks({ sidebarFor }: NavFooterLinksProps) {
             <Link2 className="size-4" />
           ));
 
-        // Get display name with defensive check
-        const displayName = t(
-          customLink.name || navLink.name || "unknown_link",
-        );
-
-        // Skip rendering if both name and url are missing
-        if (!displayName || !(customLink.url || navLink.url)) {
+        // Skip rendering if name or url is missing
+        if (
+          !(customLink.name || navLink.name) ||
+          !(customLink.url || navLink.url)
+        ) {
           return null;
         }
+
+        // Get display name
+        const displayName = t(customLink.name || navLink.name);
 
         // Render external link
         if (isExternal) {
