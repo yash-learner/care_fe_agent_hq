@@ -1,4 +1,5 @@
 import { booleanFromString } from "@/common/utils";
+import { SidebarFor } from "@/components/ui/sidebar/app-sidebar";
 import { PaymentReconciliationPaymentMethod } from "@/types/billing/paymentReconciliation/paymentReconciliation";
 import {
   ENCOUNTER_CLASS,
@@ -9,6 +10,23 @@ import {
 import { NonEmptyArray } from "@/Utils/types";
 import Decimal from "decimal.js";
 import { CountryCode } from "libphonenumber-js";
+import { ReactNode } from "react";
+
+/**
+ * Custom footer link configuration for sidebar
+ */
+export interface CustomFooterLink {
+  /** Display name (i18n key or plain text) */
+  name: string;
+  /** URL (external link or internal route path) */
+  url: string;
+  /** Opens link in new tab (_blank) or current tab (_self) */
+  target: "_blank" | "_self";
+  /** Optional: restrict visibility to specific sidebar contexts. If omitted, appears in all contexts */
+  visibleIn?: SidebarFor[];
+  /** Optional: custom icon (defaults to target-based icon: ExternalLink or Link2) */
+  icon?: ReactNode;
+}
 
 const env = import.meta.env;
 
@@ -79,8 +97,7 @@ const careConfig = {
       : undefined),
 
   defaultDischargeDisposition: env.REACT_DEFAULT_DISCHARGE_DISPOSITION as
-    | EncounterDischargeDisposition
-    | undefined,
+    EncounterDischargeDisposition | undefined,
 
   mapFallbackUrlTemplate:
     env.REACT_MAPS_FALLBACK_URL_TEMPLATE ||
@@ -407,6 +424,65 @@ const careConfig = {
   maxFormDialogFavorites: env.REACT_MAX_FORM_DIALOG_FAVORITES
     ? parseInt(env.REACT_MAX_FORM_DIALOG_FAVORITES, 10)
     : 5,
+
+  /**
+   * Custom footer links to display at the bottom of the sidebar above the user avatar.
+   * These links appear in all sidebar contexts unless restricted by visibleIn property.
+   *
+   * Can be configured via REACT_CUSTOM_FOOTER_LINKS environment variable (JSON string):
+   * ```bash
+   * REACT_CUSTOM_FOOTER_LINKS='[{"name":"docs","url":"https://docs.example.com","target":"_blank"}]'
+   * ```
+   *
+   * @example
+   * ```typescript
+   * customFooterLinks: [
+   *   {
+   *     name: "documentation",
+   *     url: "https://docs.example.com",
+   *     target: "_blank",
+   *     visibleIn: [SidebarFor.FACILITY, SidebarFor.ADMIN],
+   *   },
+   *   {
+   *     name: "admin_panel",
+   *     url: "/admin",
+   *     target: "_self",
+   *   }
+   * ]
+   * ```
+   *
+   * Plugin Integration:
+   * Plugins can also provide footer links by adding footerNavItems to their manifest:
+   * ```typescript
+   * export const manifest: PluginManifest = {
+   *   plugin: "my-plugin",
+   *   footerNavItems: [
+   *     {
+   *       name: "plugin_settings",
+   *       url: "/plugin/settings",
+   *       icon: <SettingsIcon />,
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  customFooterLinks: (env.REACT_CUSTOM_FOOTER_LINKS
+    ? JSON.parse(env.REACT_CUSTOM_FOOTER_LINKS)
+    : [
+        // Example: External link to documentation (opens in new tab)
+        // {
+        //   name: "care_documentation",
+        //   url: "https://docs.ohc.network",
+        //   target: "_blank",
+        // },
+        // Example: Internal link to admin panel (navigates in current tab, visible only in facility sidebar)
+        // {
+        //   name: "admin_settings",
+        //   url: "/admin",
+        //   target: "_self",
+        //   visibleIn: [SidebarFor.FACILITY],
+        // },
+      ]) as CustomFooterLink[],
 } as const;
 
 export default careConfig;
