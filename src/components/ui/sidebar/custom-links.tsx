@@ -1,6 +1,5 @@
 import { ExternalLink, Link2 } from "lucide-react";
 import { navigate } from "raviger";
-import { useTranslation } from "react-i18next";
 
 import {
   SidebarMenu,
@@ -17,7 +16,6 @@ interface CustomSidebarLinksProps {
 }
 
 export function CustomSidebarLinks({ context }: CustomSidebarLinksProps) {
-  const { t } = useTranslation();
   const { isMobile, open } = useSidebar();
   const careApps = useCareApps();
 
@@ -59,7 +57,7 @@ export function CustomSidebarLinks({ context }: CustomSidebarLinksProps) {
   return (
     <SidebarMenu>
       {filteredLinks.map((link, index) => (
-        <SidebarMenuItem key={`${link.url}-${index}`}>
+        <SidebarMenuItem key={`${link.url}-${link.label}-${index}`}>
           <SidebarMenuButton
             onClick={() => handleLinkClick(link)}
             className="cursor-pointer"
