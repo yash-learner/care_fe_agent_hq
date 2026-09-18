@@ -41,10 +41,6 @@ import FileUploadDialog from "@/components/Files/FileUploadDialog";
 
 import useFileUpload from "@/hooks/useFileUpload";
 
-import mutate from "@/Utils/request/mutate";
-import query from "@/Utils/request/query";
-import { PaginatedResponse } from "@/Utils/request/types";
-import { formatName } from "@/Utils/utils";
 import { Code } from "@/types/base/code/code";
 import {
   DIAGNOSTIC_REPORT_STATUS_COLORS,
@@ -70,11 +66,16 @@ import {
   FileReadMinimal,
 } from "@/types/files/file";
 import fileApi from "@/types/files/fileApi";
+import mutate from "@/Utils/request/mutate";
+import query from "@/Utils/request/query";
+import { PaginatedResponse } from "@/Utils/request/types";
+import { formatName } from "@/Utils/utils";
 
 import { PLUGIN_Component } from "@/PluginEngine";
 
 import { DottedDivider } from "@/components/careui/dotted-divider";
 import { Interpretation } from "@/types/base/qualifiedRange/qualifiedRange";
+import { getAvailableReportCodes } from "@/Utils/diagnosticReportUtils";
 
 interface DiagnosticReportFormProps {
   patientId: string;
@@ -138,6 +139,13 @@ export function DiagnosticReportForm({
   const latestReport =
     diagnosticReports.length > 0 ? diagnosticReports[0] : null;
   const hasReport = !!latestReport;
+
+  // Get available report codes using the utility helper
+  const { availableReportCodes, canCreateMoreReports } =
+    getAvailableReportCodes(
+      diagnosticReports,
+      activityDefinition?.diagnostic_report_codes,
+    );
 
   // Check if all required specimens are collected
   const hasCollectedSpecimens =
@@ -466,26 +474,29 @@ export function DiagnosticReportForm({
   }
 
   function handleCreateReport() {
-    // Only create a new report if no reports exist
-    if (!hasReport) {
-      if (!hasCollectedSpecimens) {
-        toast.error(t("specimen_collection_required"));
-        return;
-      }
-
-      const category: Code = {
-        code: "LAB",
-        display: "Laboratory",
-        system: "http://terminology.hl7.org/CodeSystem/v2-0074",
-      };
-
-      createDiagnosticReport({
-        status: DiagnosticReportStatus.preliminary,
-        category,
-        service_request: serviceRequestId,
-        code: selectedReportCode || undefined,
-      });
+    // Allow creating reports as long as there are available codes or no codes required
+    if (!canCreateMoreReports) {
+      toast.error(t("all_diagnostic_reports_created"));
+      return;
     }
+
+    if (!hasCollectedSpecimens) {
+      toast.error(t("specimen_collection_required"));
+      return;
+    }
+
+    const category: Code = {
+      code: "LAB",
+      display: "Laboratory",
+      system: "http://terminology.hl7.org/CodeSystem/v2-0074",
+    };
+
+    createDiagnosticReport({
+      status: DiagnosticReportStatus.preliminary,
+      category,
+      service_request: serviceRequestId,
+      code: selectedReportCode || undefined,
+    });
   }
 
   function handleSubmit() {
@@ -1245,10 +1256,9 @@ export function DiagnosticReportForm({
                         <Select
                           value={selectedReportCode?.code}
                           onValueChange={(value) => {
-                            const code =
-                              activityDefinition.diagnostic_report_codes?.find(
-                                (c) => c.code === value,
-                              );
+                            const code = availableReportCodes.find(
+                              (c) => c.code === value,
+                            );
                             setSelectedReportCode(code || null);
                           }}
                           disabled={!hasCollectedSpecimens || disableEdit}
@@ -1259,17 +1269,15 @@ export function DiagnosticReportForm({
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            {activityDefinition.diagnostic_report_codes.map(
-                              (code) => (
-                                <SelectItem key={code.code} value={code.code}>
-                                  <div className="flex flex-col">
-                                    <span className="truncate">
-                                      {code.display} ({code.code})
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ),
-                            )}
+                            {availableReportCodes.map((code) => (
+                              <SelectItem key={code.code} value={code.code}>
+                                <div className="flex flex-col">
+                                  <span className="truncate">
+                                    {code.display} ({code.code})
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1280,6 +1288,7 @@ export function DiagnosticReportForm({
                       disableEdit ||
                       isCreatingReport ||
                       !hasCollectedSpecimens ||
+                      !canCreateMoreReports ||
                       (!!activityDefinition?.diagnostic_report_codes?.length &&
                         !selectedReportCode)
                     }
