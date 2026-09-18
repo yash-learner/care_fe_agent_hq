@@ -190,6 +190,7 @@ export function SupplyDeliveryTable({
           <TableHead rowSpan={2}>{t("#")}</TableHead>
           <TableHead rowSpan={2}>{t("item")}</TableHead>
           <TableHead rowSpan={2}>{t("batch")}</TableHead>
+          <TableHead rowSpan={2}>{t("expiry_date")}</TableHead>
           <TableHead rowSpan={2}>{t("requested_qty")}</TableHead>
           {!internal && <TableHead rowSpan={2}>{t("pack_size")}</TableHead>}
           {!internal && <TableHead rowSpan={2}>{t("pack_qty")}</TableHead>}
@@ -285,6 +286,35 @@ export function SupplyDeliveryTable({
             <TableCell>
               {delivery.supplied_inventory_item?.product?.batch?.lot_number ||
                 "-"}
+            </TableCell>
+            <TableCell>
+              {(() => {
+                const expiryDate = internal
+                  ? delivery.supplied_inventory_item?.product?.expiration_date
+                  : delivery.supplied_item?.expiration_date;
+
+                if (!expiryDate) return "-";
+
+                const expiry = new Date(expiryDate);
+                const now = new Date();
+                const isExpired = expiry < now;
+                const isExpiringSoon =
+                  expiry < new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+                return (
+                  <span
+                    className={cn(
+                      isExpired
+                        ? "text-red-600 font-medium"
+                        : isExpiringSoon
+                          ? "text-amber-600 font-medium"
+                          : "",
+                    )}
+                  >
+                    {formatDate(expiry, "dd/MM/yyyy")}
+                  </span>
+                );
+              })()}
             </TableCell>
             <TableCell>
               {delivery.supply_request
