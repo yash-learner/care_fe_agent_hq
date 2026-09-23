@@ -368,113 +368,125 @@ export default function PatientIndex({ facilityId }: { facilityId: string }) {
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-lg border border-gray-200">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-[300px]">
-                                  {t("patient_name")}
-                                </TableHead>
-                                <TableHead>{t("phone_number")}</TableHead>
-                                <TableHead>{t("gender")}</TableHead>
-                                <TableHead className="w-[220px]">
-                                  {t("actions")}
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {patientList.results.map((patient, index) => (
-                                <TableRow
-                                  key={patient.id}
-                                  className="cursor-pointer"
-                                  onClick={() => handlePatientSelect(index)}
-                                >
-                                  <TableCell className="font-medium">
-                                    {patient.name}
-                                    {!patientList?.partial && (
-                                      <p className="text-xs text-gray-500 text-wrap line-clamp-2">
-                                        {"address" in patient &&
-                                          patient.address}
-                                      </p>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatPhoneNumberIntl(
-                                      patient.phone_number,
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {
-                                      GENDER_TYPES.find(
-                                        (g) => g.id === patient.gender,
-                                      )?.text
-                                    }
-                                  </TableCell>
-                                  <TableCell>
-                                    <div
-                                      className="flex"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <Button
-                                        variant="outline"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          handleScheduleAppointment(index);
-                                        }}
-                                        className="flex-1 rounded-r-none border-r-0"
-                                      >
-                                        {t("schedule_appointment")}
-                                      </Button>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                            }}
-                                            className="rounded-l-none"
-                                          >
-                                            <ChevronDown className="size-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              handleScheduleAppointment(index);
-                                            }}
-                                          >
-                                            {t("schedule_appointment")}
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              handleCreateEncounter(index);
-                                            }}
-                                          >
-                                            {t("create_encounter")}
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              handlePatientSelect(index);
-                                            }}
-                                          >
-                                            {t("patient_home")}
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </div>
-                                  </TableCell>
+                        <>
+                          <div className="mb-3 text-sm text-gray-600">
+                            {t(
+                              patientList.results.length === 1
+                                ? "patient_search_results_count"
+                                : "patient_search_results_count_plural",
+                              { count: patientList.results.length },
+                            )}
+                          </div>
+                          <div className="rounded-lg border border-gray-200">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[300px]">
+                                    {t("patient_name")}
+                                  </TableHead>
+                                  <TableHead>{t("phone_number")}</TableHead>
+                                  <TableHead>{t("gender")}</TableHead>
+                                  <TableHead className="w-[220px]">
+                                    {t("actions")}
+                                  </TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                              </TableHeader>
+                              <TableBody>
+                                {patientList.results.map((patient, index) => (
+                                  <TableRow
+                                    key={patient.id}
+                                    className="cursor-pointer"
+                                    onClick={() => handlePatientSelect(index)}
+                                  >
+                                    <TableCell className="font-medium">
+                                      {patient.name}
+                                      {!patientList?.partial && (
+                                        <p className="text-xs text-gray-500 text-wrap line-clamp-2">
+                                          {"address" in patient &&
+                                            patient.address}
+                                        </p>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      {formatPhoneNumberIntl(
+                                        patient.phone_number,
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      {
+                                        GENDER_TYPES.find(
+                                          (g) => g.id === patient.gender,
+                                        )?.text
+                                      }
+                                    </TableCell>
+                                    <TableCell>
+                                      <div
+                                        className="flex"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <Button
+                                          variant="outline"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleScheduleAppointment(index);
+                                          }}
+                                          className="flex-1 rounded-r-none border-r-0"
+                                        >
+                                          {t("schedule_appointment")}
+                                        </Button>
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button
+                                              variant="outline"
+                                              size="icon"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                              }}
+                                              className="rounded-l-none"
+                                            >
+                                              <ChevronDown className="size-4" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleScheduleAppointment(
+                                                  index,
+                                                );
+                                              }}
+                                            >
+                                              {t("schedule_appointment")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleCreateEncounter(index);
+                                              }}
+                                            >
+                                              {t("create_encounter")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handlePatientSelect(index);
+                                              }}
+                                            >
+                                              {t("patient_home")}
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </>
                       )}
                     </>
                   )}
@@ -496,135 +508,145 @@ export default function PatientIndex({ facilityId }: { facilityId: string }) {
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-lg border border-gray-200">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-[300px]">
-                                  {t("patient_name")}
-                                </TableHead>
-                                <TableHead>{t("phone_number")}</TableHead>
-                                <TableHead>{t("gender")}</TableHead>
-                                <TableHead className="w-[220px]">
-                                  {t("actions")}
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {encounterList.results.map((encounter) => (
-                                <TableRow
-                                  key={encounter.id}
-                                  className="cursor-pointer"
-                                  onClick={() =>
-                                    navigateToVerify(encounter.patient)
-                                  }
-                                >
-                                  <TableCell>
-                                    <p className="font-medium text-wrap">
-                                      {encounter.patient.name}
-                                      {encounter.external_identifier && (
-                                        <span className="text-gray-700">
-                                          {" "}
-                                          ({encounter.external_identifier})
-                                        </span>
-                                      )}
-                                    </p>
-                                    <p className="text-xs text-gray-500 text-wrap line-clamp-2">
-                                      {encounter.patient.address}
-                                    </p>
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatPhoneNumberIntl(
-                                      encounter.patient.phone_number,
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {
-                                      GENDER_TYPES.find(
-                                        (g) =>
-                                          g.id === encounter.patient.gender,
-                                      )?.text
-                                    }
-                                  </TableCell>
-                                  <TableCell>
-                                    <div
-                                      className="flex"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <Button
-                                        variant="outline"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          navigateToVerify(
-                                            encounter.patient,
-                                            undefined,
-                                            "schedule",
-                                          );
-                                        }}
-                                        className="flex-1 rounded-r-none border-r-0"
-                                      >
-                                        {t("schedule_appointment")}
-                                      </Button>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                            }}
-                                            className="rounded-l-none"
-                                          >
-                                            <ChevronDown className="size-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              navigateToVerify(
-                                                encounter.patient,
-                                                undefined,
-                                                "schedule",
-                                              );
-                                            }}
-                                          >
-                                            {t("schedule_appointment")}
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              navigateToVerify(
-                                                encounter.patient,
-                                                undefined,
-                                                "create_encounter",
-                                              );
-                                            }}
-                                          >
-                                            {t("create_encounter")}
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onSelect={(event) => {
-                                              event.preventDefault();
-                                              event.stopPropagation();
-                                              navigateToVerify(
-                                                encounter.patient,
-                                              );
-                                            }}
-                                          >
-                                            {t("patient_home")}
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </div>
-                                  </TableCell>
+                        <>
+                          <div className="mb-3 text-sm text-gray-600">
+                            {t(
+                              encounterList.count === 1
+                                ? "patient_search_results_count"
+                                : "patient_search_results_count_plural",
+                              { count: encounterList.count },
+                            )}
+                          </div>
+                          <div className="rounded-lg border border-gray-200">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[300px]">
+                                    {t("patient_name")}
+                                  </TableHead>
+                                  <TableHead>{t("phone_number")}</TableHead>
+                                  <TableHead>{t("gender")}</TableHead>
+                                  <TableHead className="w-[220px]">
+                                    {t("actions")}
+                                  </TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                              </TableHeader>
+                              <TableBody>
+                                {encounterList.results.map((encounter) => (
+                                  <TableRow
+                                    key={encounter.id}
+                                    className="cursor-pointer"
+                                    onClick={() =>
+                                      navigateToVerify(encounter.patient)
+                                    }
+                                  >
+                                    <TableCell>
+                                      <p className="font-medium text-wrap">
+                                        {encounter.patient.name}
+                                        {encounter.external_identifier && (
+                                          <span className="text-gray-700">
+                                            {" "}
+                                            ({encounter.external_identifier})
+                                          </span>
+                                        )}
+                                      </p>
+                                      <p className="text-xs text-gray-500 text-wrap line-clamp-2">
+                                        {encounter.patient.address}
+                                      </p>
+                                    </TableCell>
+                                    <TableCell>
+                                      {formatPhoneNumberIntl(
+                                        encounter.patient.phone_number,
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      {
+                                        GENDER_TYPES.find(
+                                          (g) =>
+                                            g.id === encounter.patient.gender,
+                                        )?.text
+                                      }
+                                    </TableCell>
+                                    <TableCell>
+                                      <div
+                                        className="flex"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <Button
+                                          variant="outline"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            navigateToVerify(
+                                              encounter.patient,
+                                              undefined,
+                                              "schedule",
+                                            );
+                                          }}
+                                          className="flex-1 rounded-r-none border-r-0"
+                                        >
+                                          {t("schedule_appointment")}
+                                        </Button>
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button
+                                              variant="outline"
+                                              size="icon"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                              }}
+                                              className="rounded-l-none"
+                                            >
+                                              <ChevronDown className="size-4" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                navigateToVerify(
+                                                  encounter.patient,
+                                                  undefined,
+                                                  "schedule",
+                                                );
+                                              }}
+                                            >
+                                              {t("schedule_appointment")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                navigateToVerify(
+                                                  encounter.patient,
+                                                  undefined,
+                                                  "create_encounter",
+                                                );
+                                              }}
+                                            >
+                                              {t("create_encounter")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onSelect={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                navigateToVerify(
+                                                  encounter.patient,
+                                                );
+                                              }}
+                                            >
+                                              {t("patient_home")}
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </>
                       )}
                     </>
                   )}
