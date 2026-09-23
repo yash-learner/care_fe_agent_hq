@@ -17,6 +17,16 @@ interface ILogo {
   dark: string;
 }
 
+export type SidebarContext = "facility" | "organization" | "patient" | "admin";
+
+export interface SidebarLink {
+  label: string;
+  url: string;
+  type: "external" | "internal";
+  openInNewTab: boolean;
+  contexts?: SidebarContext[];
+}
+
 const logo = (value?: string, fallback?: ILogo) => {
   if (!value) {
     return fallback;
@@ -423,6 +433,24 @@ const careConfig = {
     : 5,
 
   /**
+   * Custom sidebar links configuration from environment variables
+   * Format: JSON string with array of sidebar link objects
+   * Each link can have: label, url, type (external|internal), openInNewTab, contexts (optional)
+   * Example: [{"label":"Dashboard","url":"https://example.com","type":"external","openInNewTab":true,"contexts":["facility","admin"]}]
+   */
+  customSidebarLinks: (() => {
+    try {
+      return env.REACT_CUSTOM_SIDEBAR_LINKS
+        ? (JSON.parse(env.REACT_CUSTOM_SIDEBAR_LINKS) as SidebarLink[])
+        : [];
+    } catch (error) {
+      console.warn(
+        "Failed to parse REACT_CUSTOM_SIDEBAR_LINKS, falling back to empty array:",
+        error,
+      );
+      return [];
+    }
+  })(),
    * Maximum number of datapoints allowed in a single upsert request.
    * This should be set with whatever backend sets.
    */

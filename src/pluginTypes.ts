@@ -215,6 +215,7 @@ export type PluginManifest = {
   billingNavItems?: NavigationLink[];
   userNavItems?: NavigationLink[];
   adminNavItems?: NavigationLink[];
+  sidebarLinks?: import("@careConfig").SidebarLink[];
   organizationTabs?: PluginOrganizationTab[];
   components?: PluginComponentMap;
   encounterTabs?: Record<
